@@ -43,11 +43,6 @@
       "sha256": "8d3a461e4f00ed35b089e6ea292bebb810b97562a10155bcf8dc2ce1b45b60f9"
     },
     {
-      "path": "SOURCE_PROVENANCE.json",
-      "bytes": 16474,
-      "sha256": "77cb3088ab624c73d190fe2f885ff9026abeca8f26d7d0f65e8fdffbecc98576"
-    },
-    {
       "path": "THIRD_PARTY_NOTICES.md",
       "bytes": 1288,
       "sha256": "44be7084ecaaa3d8cc9e6fb7d233c2ce9b34aa3e35f0afddcdd6a9c75237a4a3"
