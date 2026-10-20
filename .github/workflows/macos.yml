@@ -15,6 +15,12 @@ jobs:
     # imports, shell syntax, paths, installer plan/rollback and the sandboxed
     # installer. It cannot attest to a physical F8 press, a microphone, TCC
     # permissions or Premiere loading the panel.
+    #
+    # The checks are independent: one failing check must not hide the others,
+    # so every check after the environment setup runs on `!cancelled()` and a
+    # check whose input failed to install is skipped by name (`outcome`), not
+    # silently. No step uses continue-on-error, so any failed check fails the
+    # job and therefore the whole workflow.
     runs-on: macos-15
     timeout-minutes: 35
     steps:
@@ -26,18 +32,24 @@ jobs:
         with:
           node-version: "24"
       - name: Install test dependencies
+        id: test_deps
         run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
       - name: Python tests (real Darwin imports included)
+        if: ${{ !cancelled() && steps.test_deps.outcome == 'success' }}
         run: python -m pytest tests -q
       - name: Node panel and bridge tests
+        if: ${{ !cancelled() }}
         run: |
           node tests/premiere_lifecycle.cjs
           node --test tests/review_ptt_release.cjs tests/cep_adapter.cjs tests/single_panel.cjs tests/panel_platform.cjs
       - name: Install macOS runtime dependencies (no transcription model)
+        id: runtime_deps
+        if: ${{ !cancelled() }}
         run: |
           python -m pip install --disable-pip-version-check -r requirements-macos.txt
           python -m pip install --disable-pip-version-check -r requirements-macos-optional.txt
       - name: Real native and runtime imports (no tap, microphone stream or permission prompt)
+        if: ${{ !cancelled() && steps.runtime_deps.outcome == 'success' }}
         run: |
           python - <<'PY'
           import platform
@@ -62,15 +74,19 @@ jobs:
           print("no event tap, microphone stream or TCC permission request was created")
           PY
       - name: Installer check-only on the real Darwin interpreter
+        if: ${{ !cancelled() }}
         run: python scripts/install_macos.py --check-only --python "$(command -v python)"
       - name: Shell syntax
+        if: ${{ !cancelled() }}
         run: |
           bash -n install.sh
           bash -n uninstall.sh
           bash -n tests/shell/installer_tests.sh
       - name: Installer plan and sandboxed install/upgrade/restore/purge
+        if: ${{ !cancelled() }}
         run: sh tests/shell/installer_tests.sh
       - name: Release allowlist and manifest check
+        if: ${{ !cancelled() }}
         run: |
           python scripts/build_release.py --platform macos --dry-run
           python scripts/update_manifests.py --check

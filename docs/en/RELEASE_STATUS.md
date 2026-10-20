@@ -1,6 +1,6 @@
 # Tests and compatibility
 
-Released version: **1.0.1 (Windows)**. Candidate: **1.1.0-alpha.3 (cross-platform source, macOS experimental)**. Test date: 2026-10-20.
+Released version: **1.0.1 (Windows)**. Candidate: **1.1.0-alpha.4 (cross-platform source, macOS experimental)**. Test date: 2026-10-20.
 
 ## Tested environment
 
@@ -31,9 +31,11 @@ The full recording and edit test used 1.0.0. 1.0.1 verified the interface, insta
 
 Automated checks cover the Python tests, the Node panel/bridge tests, the bridge host contract and install/restore filesystem tests; see [development and tests](DEVELOPMENT.md) for the commands.
 
-## 1.1.0-alpha.3 candidate
+## 1.1.0-alpha.4 candidate
 
-This candidate makes the source installable on macOS and completes the English documentation. macOS stays **experimental**: every statement below is automated evidence only. No macOS hardware acceptance is recorded and no macOS CI run is claimed. The alpha.3 correction keeps the evidence below unchanged: it fixes the sandboxed two-install restore test expectations, records the shell entry points as executable in Git with LF line endings, and corrects the permission and product wording in the public READMEs.
+This candidate makes the source installable on macOS and completes the English documentation. macOS stays **experimental**: every statement below is automated evidence only. No macOS hardware acceptance is recorded and no green CI run is claimed.
+
+The alpha.4 correction fixes what the published alpha.3 GitHub runs reported: the host's spelling of a project path (`/var` vs `/private/var`, an 8.3 short name on Windows) no longer looks like a different project; the source manifest hashes text from its content, so a fresh checkout matches it; and the workflows run their independent Node, native-import, shell and packaging checks even when the Python suite fails. Alpha.3 fixed the sandboxed two-install restore expectations, recorded the shell entry points as executable with LF line endings, and corrected the permission and product wording.
 
 | Evidence | Windows | macOS |
 |---|---|---|
@@ -43,7 +45,7 @@ This candidate makes the source installable on macOS and completes the English d
 | Runtime and PyObjC imports | 1.0.1 environment | not performed: the workflow is configured to install and import them on real Darwin, and must be run by the maintainer |
 | Real Premiere, real microphone, real Function key | 1.0.1 acceptance (before this candidate) | **not performed** |
 | Real agent handoff | 1.0 acceptance (Codex) | not performed |
-| macOS CI workflow | not applicable | configured in `.github/workflows/macos.yml`; **not executed and not claimed** |
+| macOS CI workflow | not applicable | configured in `.github/workflows/macos.yml`; the published alpha.3 candidate was rejected by the GitHub runners and the reported failures are repaired here, but **no passing run is claimed** |
 
 The macOS candidate is scoped to Apple silicon running macOS 14 or later: official wheel metadata lists `onnxruntime==1.31.0` for macOS 14+ arm64 only, with no macOS x86_64 wheel for Intel Macs, so the installer refuses any other host.
 

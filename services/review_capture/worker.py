@@ -24,6 +24,7 @@ from typing import Any
 
 from .audio import MicrophoneRecorder, enumerate_input_devices, recover_interrupted_capture
 from .backends import keymonitor
+from .identity import same_project_path
 from .ptt import PushToTalk, backend_capability
 from .storage import (
     atomic_write_json,
@@ -77,7 +78,9 @@ def _safe_id(value: Any, label: str) -> str:
 
 
 def _same_context(start: dict[str, Any], end: dict[str, Any]) -> tuple[bool, str]:
-    if str(start.get("project_path", "")).casefold() != str(end.get("project_path", "")).casefold():
+    # Both anchors keep the host's spelling of the project path; only the
+    # identity of the file matters, so equivalent aliases stay the same project.
+    if not same_project_path(start.get("project_path"), end.get("project_path")):
         return False, "project_changed"
     if str(start.get("sequence_id", "")) != str(end.get("sequence_id", "")):
         return False, "sequence_changed"
@@ -383,7 +386,9 @@ class ReviewCaptureWorker:
         root.mkdir(parents=True, exist_ok=True)
         if manifest.exists():
             current = read_json(manifest)
-            if current.get("session_id") != session_id or str(current.get("project", {}).get("path", "")).casefold() != str(project["path"]).casefold():
+            if current.get("session_id") != session_id or not same_project_path(
+                current.get("project", {}).get("path"), project["path"]
+            ):
                 raise ValueError("已有意见批次与当前工程不一致")
         else:
             atomic_write_json(manifest, {
@@ -443,7 +448,9 @@ class ReviewCaptureWorker:
         anchor = self._anchor(snapshot, "start" if mode == "range" else "point", operation_id)
         snapshot_ref = _save_snapshot(note_dir, "start", snapshot)
         anchor["snapshot_ref"] = snapshot_ref
-        if str(anchor["project_path"]).casefold() != str(project["path"]).casefold():
+        # The anchor keeps the host's path and the note keeps the resolved one;
+        # a macOS /var alias or a Windows 8.3 name still names this project.
+        if not same_project_path(anchor["project_path"], project["path"]):
             raise ValueError("工程位置在宿主读取期间发生变化")
         if mode == "range":
             location = {"coordinate_system": "sequence_ticks", "range_method": "drag_endpoints", "range_status": "awaiting_end", "endpoints": {"start": anchor}}
@@ -517,7 +524,7 @@ class ReviewCaptureWorker:
             raise RuntimeError("这段按键录音尚未结束或编号已变化")
         snapshot = payload.get("snapshot") or {}
         project, sequence, project_root = self._project_context(snapshot)
-        if str(project["path"]).casefold() != str(capture.get("project_path", "")).casefold():
+        if not same_project_path(project["path"], capture.get("project_path")):
             raise ValueError("按键录音期间 Premiere 工程发生变化；原始录音已保留")
         session_id = _safe_id(capture.get("session_id"), "session_id")
         note_id = capture_id
@@ -783,7 +790,9 @@ class ReviewCaptureWorker:
             raise RuntimeError("终点请求已过期或已被替换")
         snapshot = payload.get("snapshot") or {}
         project, _sequence, _root = self._project_context(snapshot)
-        if str(project.get("path", "")).casefold() != str(note.get("project", {}).get("path", "")).casefold() or str(project_path).casefold() != str(project["path"]).casefold():
+        if not same_project_path(
+            project.get("path"), note.get("project", {}).get("path")
+        ) or not same_project_path(project_path, project["path"]):
             raise ValueError("补充终点时工程已改变")
         end = self._anchor(snapshot, "stop_recording", expected_op)
         end_snapshot_ref = _save_snapshot(note_path.parent, "end", snapshot)
@@ -872,8 +881,8 @@ class ReviewCaptureWorker:
         if not isinstance(snapshot, dict):
             raise ValueError("Premiere 没有提供当前时间线快照")
         project, sequence, project_root = self._project_context(snapshot)
-        requested_project = Path(str(payload.get("project_path", ""))).resolve()
-        if requested_project != Path(project["path"]).resolve():
+        requested_project = Path(str(payload.get("project_path", "")))
+        if not same_project_path(requested_project, project["path"]):
             raise ValueError("传入工程与 Premiere 当前工程不一致")
         session_id = _safe_id(payload.get("session_id"), "session_id")
         session_root = self._session_root(project_root, session_id)
@@ -881,7 +890,9 @@ class ReviewCaptureWorker:
         if not session_path.is_file():
             raise ValueError("本批意见记录不存在")
         session = read_json(session_path)
-        if session.get("session_id") != session_id or str(session.get("project", {}).get("path", "")).casefold() != project["path"].casefold():
+        if session.get("session_id") != session_id or not same_project_path(
+            session.get("project", {}).get("path"), project["path"]
+        ):
             raise ValueError("当前意见批次不属于 Premiere 打开的工程")
 
         handoff_path = project_root / "work" / "premiere-review" / "CURRENT_REVIEW_BATCH.json"
@@ -947,7 +958,7 @@ class ReviewCaptureWorker:
                 if not isinstance(anchor, dict):
                     continue
                 baseline_fingerprints.append(str(anchor.get("content_fingerprint") or ""))
-                if str(anchor.get("project_path", "")).casefold() != project["path"].casefold():
+                if not same_project_path(anchor.get("project_path"), project["path"]):
                     reasons.append("捕获工程与当前工程不同")
                 if str(anchor.get("sequence_id") or "") != sequence_id:
                     reasons.append("意见捕获序列与当前序列不同")

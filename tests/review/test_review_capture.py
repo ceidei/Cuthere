@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+import os
+import shutil
 import tempfile
 import unittest
 import wave
@@ -8,6 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from services.review_capture.audio import _finalize_raw_pcm, recover_interrupted_capture
+from services.review_capture.identity import same_project_path
 from services.review_capture.storage import atomic_write_json, read_json, sha256_file
 from services.review_capture.timebase import normalize_interval, parse_timecode, ticks_to_frame
 from services.review_capture.worker import ReviewCaptureWorker
@@ -106,14 +109,40 @@ class ReviewCaptureTests(unittest.TestCase):
         self.addCleanup(self.worker._lock_handle.close)
         self.addCleanup(self.patch_recorder.stop)
 
-    def snapshot(self, ticks: str, *, sequence: str = "seq-1", fingerprint: str = "fnv32x2:a1b2c3d4"):
+    def snapshot(self, ticks: str, *, sequence: str = "seq-1", fingerprint: str = "fnv32x2:a1b2c3d4",
+                 project_path: str | None = None):
         return {
             "read_at": "2026-10-14T10:00:00Z",
-            "project": {"name": "SampleProject", "path": str(self.project), "host_id": "project-1"},
+            "project": {"name": "SampleProject", "path": str(project_path or self.project), "host_id": "project-1"},
             "sequence": {"name": "Sequence 01", "host_id": sequence, "timebase": "8475667200", "frame_rate": {"numerator": 30000, "denominator": 1001}},
             "location": {"ticks": str(ticks), "time_label": "00:00:00:00"},
             "content_fingerprint": fingerprint,
             "content_fingerprint_status": "complete",
+        }
+
+    def alias_path(self) -> str:
+        """The same project file spelled with a parent/current segment.
+
+        No symlink privilege is needed, so every host runs this check. GitHub's
+        runners hit the same identity problem with the host's own spelling
+        (``/var`` vs ``/private/var`` on macOS, an 8.3 name on Windows).
+        """
+        return str(self.project.parent / ".." / self.project.parent.name / self.project.name)
+
+    def different_project(self, name: str = "OtherProject.prproj") -> Path:
+        other = self.root / name
+        other.write_bytes(b"a different project, not the recorded one")
+        return other
+
+    def start_payload(self, *, project_path: str | None = None, session_id: str, note_id: str,
+                      mode: str = "point", ticks: str = "5080320000000") -> dict:
+        return {
+            "mode": mode,
+            "snapshot": self.snapshot(ticks, project_path=project_path),
+            "device": {"index": 0, "key": "fixture", "name": "Fixture mic"},
+            "session_id": session_id,
+            "note_id": note_id,
+            "operation_id": "start_" + session_id,
         }
 
     def start_range(self, ticks="5080320000000"):
@@ -343,6 +372,114 @@ class ReviewCaptureTests(unittest.TestCase):
                 "snapshot": self.snapshot("8890560000000"),
             })
 
+    # -- project identity across equivalent filesystem paths --------------
+    def test_start_accepts_an_equivalent_project_path_alias(self):
+        started = self.worker._start(self.start_payload(
+            project_path=self.alias_path(), session_id="session_alias_0001", note_id="note_alias_0001"))
+        note = read_json(Path(started["note_path"]))
+        # The note keeps the resolved project; the anchor keeps what the host
+        # reported, so the snapshot remains evidence of the host's spelling.
+        self.assertEqual(note["project"]["path"], str(self.project.resolve()))
+        self.assertEqual(note["location"]["point"]["project_path"], self.alias_path())
+
+    def test_start_accepts_a_symlinked_project_alias(self):
+        link_parent = Path(tempfile.mkdtemp(prefix="cuthere-project-alias-"))
+        self.addCleanup(shutil.rmtree, link_parent, ignore_errors=True)
+        link = link_parent / "project"
+        try:
+            os.symlink(str(self.project.parent), str(link), target_is_directory=True)
+        except (AttributeError, NotImplementedError, OSError) as exc:
+            self.skipTest(f"this host cannot create a directory symlink: {type(exc).__name__}: {exc}")
+        started = self.worker._start(self.start_payload(
+            project_path=str(link / self.project.name),
+            session_id="session_alias_0002", note_id="note_alias_0002"))
+        self.assertEqual(read_json(Path(started["note_path"]))["project"]["path"],
+                         str(self.project.resolve()))
+
+    def test_existing_session_with_an_equivalent_project_path_is_reused(self):
+        session_id, note_id = "session_alias_0003", "note_alias_0003"
+        session_root = self.worker._session_root(self.project.parent, session_id)
+        atomic_write_json(session_root / "session.json", {
+            "schema_version": "1.0", "session_id": session_id, "created_at": "2026-10-20T00:00:00Z",
+            "project": {"path": self.alias_path()}, "notes": [],
+        })
+        self.worker._start(self.start_payload(session_id=session_id, note_id=note_id))
+        self.assertEqual(read_json(session_root / "session.json")["notes"], [note_id])
+
+    def test_existing_session_of_a_different_project_is_rejected(self):
+        session_id = "session_alias_0004"
+        session_root = self.worker._session_root(self.project.parent, session_id)
+        atomic_write_json(session_root / "session.json", {
+            "schema_version": "1.0", "session_id": session_id, "created_at": "2026-10-20T00:00:00Z",
+            "project": {"path": str(self.different_project())}, "notes": [],
+        })
+        with self.assertRaisesRegex(ValueError, "已有意见批次与当前工程不一致"):
+            self.worker._start(self.start_payload(
+                session_id=session_id, note_id="note_alias_0004"))
+
+    def test_ptt_commit_accepts_an_equivalent_project_path_alias(self):
+        # The arm file captured the host's spelling; the release snapshot is
+        # resolved to the canonical project. Both name the same file.
+        capture_id = self.prepared_ptt_capture("capture_alias_fixture_0001")
+        self.worker.ptt.current["project_path"] = self.alias_path()
+        result = self.worker._ptt_commit({
+            "capture_id": capture_id,
+            "snapshot": self.snapshot("5080320000000"),
+        })
+        self.assertEqual(result["mode"], "point")
+        self.assertEqual(read_json(Path(result["note_path"]))["project"]["path"],
+                         str(self.project.resolve()))
+
+    def test_ptt_commit_rejects_a_different_project_and_keeps_the_audio(self):
+        capture_id = self.prepared_ptt_capture("capture_other_fixture_0001")
+        self.worker.ptt.current["project_path"] = str(self.different_project())
+        with self.assertRaisesRegex(ValueError, "工程发生变化"):
+            self.worker._ptt_commit({
+                "capture_id": capture_id,
+                "snapshot": self.snapshot("5080320000000"),
+            })
+        self.assertTrue((self.worker.ipc_root / "ptt" / capture_id / "audio.wav").is_file())
+
+    def test_lock_end_accepts_an_equivalent_project_path_alias(self):
+        started = self.start_range()
+        result = self.worker._lock_end({
+            "note_id": started["note_id"], "operation_id": "lock_alias_0001",
+            "snapshot": self.snapshot("8890560000000", project_path=self.alias_path()),
+        })
+        self.assertEqual(result["location"]["range_status"], "locked")
+        self.assertEqual(result["location"]["version_status"], "matched")
+
+    def test_lock_end_still_rejects_a_genuinely_different_project(self):
+        started = self.start_range()
+        result = self.worker._lock_end({
+            "note_id": started["note_id"], "operation_id": "lock_other_0001",
+            "snapshot": self.snapshot("8890560000000",
+                                      project_path=str(self.different_project())),
+        })
+        self.assertEqual(result["location"]["range_status"], "stale")
+        self.assertEqual(result["location"]["stale_reason"], "project_changed")
+
+    def test_attach_endpoint_accepts_an_equivalent_project_path_alias(self):
+        started = self.start_range()
+        stopped = self.worker._stop({"note_id": started["note_id"], "operation_id": "stop_alias_0001"})
+        attached = self.worker._attach_endpoint({
+            "note_id": started["note_id"], "note_path": stopped["note_path"],
+            "operation_id": "stop_alias_0001",
+            "snapshot": self.snapshot("8890560000000", project_path=self.alias_path()),
+        })
+        self.assertEqual(attached["location"]["range_status"], "locked")
+
+    def test_attach_endpoint_rejects_a_genuinely_different_project(self):
+        started = self.start_range()
+        stopped = self.worker._stop({"note_id": started["note_id"], "operation_id": "stop_other_0001"})
+        with self.assertRaisesRegex(ValueError, "补充终点时工程已改变"):
+            self.worker._attach_endpoint({
+                "note_id": started["note_id"], "note_path": stopped["note_path"],
+                "operation_id": "stop_other_0001",
+                "snapshot": self.snapshot("8890560000000",
+                                          project_path=str(self.different_project())),
+            })
+
     def test_interval_normalization_and_drop_frame_conversion(self):
         self.assertEqual(normalize_interval(9, 3)["direction"], "reverse")
         self.assertFalse(normalize_interval(3, 3)["valid"])
@@ -407,6 +544,40 @@ class ReviewCaptureTests(unittest.TestCase):
         self.assertEqual(recovered["mode"], "range")
         self.assertEqual(self.worker.ptt.current["id"], new_id)
         self.assertFalse((self.worker.ptt.capture_root / "pending" / f"{old_id}.json").exists())
+
+
+class ProjectPathIdentityTests(unittest.TestCase):
+    """The identity rule itself, independent of a worker or a real project."""
+
+    def test_a_missing_path_never_identifies_a_project(self):
+        self.assertFalse(same_project_path(None, None))
+        self.assertFalse(same_project_path("", ""))
+        self.assertFalse(same_project_path("", "/tmp/Project.prproj"))
+
+    def test_a_parent_segment_alias_identifies_the_same_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            project = root / "Project.prproj"
+            alias = root / ".." / root.name / "Project.prproj"
+            self.assertTrue(same_project_path(project, alias))
+
+    def test_case_rules_follow_the_platform_instead_of_blanket_casefold(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            # Neither file exists, so only the platform's own case rules apply:
+            # Windows lowercases, a case-sensitive filesystem keeps them apart,
+            # and macOS stays conservative because it cannot tell here.
+            expected = os.path.normcase("Project.prproj") == os.path.normcase("project.prproj")
+            self.assertEqual(same_project_path(root / "Project.prproj", root / "project.prproj"),
+                             expected)
+
+    def test_two_existing_projects_stay_different(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            first, second = root / "One.prproj", root / "Two.prproj"
+            first.write_bytes(b"one")
+            second.write_bytes(b"two")
+            self.assertFalse(same_project_path(first, second))
 
 
 if __name__ == "__main__":

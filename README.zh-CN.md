@@ -4,7 +4,7 @@
 
 按住 F8 说话，松开后自动保存录音、转写和时间线位置。提完一批意见，交给本地 Codex 等智能体，结合工程与音视频内容生成新的剪辑版本。
 
-当前版本：**1.1.0-alpha.3**——Windows 1.0.1 为发布路径，macOS 为实验性候选。macOS 候选只有自动化检查，**没有**在真实 Mac 上配合 Premiere、麦克风和 F8 运行过。[下载安装包](https://github.com/ceidei/cuthere/releases/latest) · [测试与兼容范围](docs/RELEASE_STATUS.md) · [English README](README.md)
+当前版本：**1.1.0-alpha.4**——Windows 1.0.1 为发布路径，macOS 为实验性候选。macOS 候选只有自动化检查，**没有**在真实 Mac 上配合 Premiere、麦克风和 F8 运行过。[下载安装包](https://github.com/ceidei/cuthere/releases/latest) · [测试与兼容范围](docs/RELEASE_STATUS.md) · [English README](README.md)
 
 ## 功能
 
@@ -56,8 +56,8 @@
 候选源码包解压后，在包含 `install.sh` 的目录运行：
 
 ```bash
-unzip cuthere-1.1.0-alpha.3-macos-source.zip -d cuthere-1.1.0-alpha.3-macos-source
-cd cuthere-1.1.0-alpha.3-macos-source
+unzip cuthere-1.1.0-alpha.4-macos-source.zip -d cuthere-1.1.0-alpha.4-macos-source
+cd cuthere-1.1.0-alpha.4-macos-source
 
 ./install.sh --check-only   # 检查 Python 3.11、FFmpeg、CEP 目录、磁盘与主机范围
 ./install.sh                # 默认：只打印计划，不写盘

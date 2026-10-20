@@ -1,5 +1,13 @@
 # 更新记录
 
+## 1.1.0-alpha.4
+
+针对已发布 alpha.3 在 GitHub 运行器上实际暴露的失败所做的修复。macOS 仍为**实验性**：自动化检查通过，但尚未在真实 Mac 上配合 Premiere、麦克风和功能键验收；也不声称已有通过的 CI 运行。
+
+- 工程路径身份：同一工程的不同写法（macOS 的 `/var` 与 `/private/var`、Windows 的 8.3 短名、`..` 或符号链接别名）按文件身份比较，不再被误判为另一个工程；真正不同的工程与序列变化仍会被拒绝。
+- 源码清单：`FILE_MANIFEST.json` 按内容判断文本并按 LF 归一化，`.gitignore`、`.gitattributes`、`LICENSE` 与 `.cjs` 测试驱动在全新检出时与清单一致；CI 只校验清单，不在测试时重新生成。
+- 持续集成：各平台的独立检查（Node、macOS 原生依赖导入、安装器 check-only 与 shell、打包与清单）在 Python 测试失败后仍会执行；没有任何检查使用 `continue-on-error`，失败仍会使整体工作流失败。
+
 ## 1.1.0-alpha.3
 
 预发布复核的收尾修订。macOS 仍为**实验性**：自动化检查通过，但尚未在真实 Mac 上配合 Premiere、麦克风和功能键验收。

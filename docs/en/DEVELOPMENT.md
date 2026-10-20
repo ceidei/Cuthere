@@ -27,6 +27,8 @@ sh tests/shell/installer_tests.sh          # sandboxed folders; no real extensio
 
 `-TestRoot` must point at a directory that does not exist yet. These checks use synthetic data and must never operate on a real project or the current Premiere installation. They cover file formats, installation/restore logic and interface behaviour; changes that involve a microphone, keys, Premiere or an agent still need the full workflow checked in a separate test project.
 
+The two GitHub workflows run their Python, Node, native-import, shell and packaging checks independently: each check still runs when an unrelated one fails, and any failed check fails the workflow. `FILE_MANIFEST.json` is verified with `python scripts/update_manifests.py --check`; text is hashed from its content with LF line endings, so a fresh checkout matches it.
+
 ## Release packages
 
 Source packages are built from an allowlist with a leak scan and written to `output/`:

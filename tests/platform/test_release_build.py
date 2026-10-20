@@ -97,6 +97,47 @@ class RepositoryManifestTests(unittest.TestCase):
         problems = update_manifests.check()
         self.assertEqual(problems, [], "\n".join(problems))
 
+    def test_text_detection_comes_from_the_content_not_the_suffix(self):
+        from scripts import update_manifests
+
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            # Suffixless text: a fresh checkout writes LF, this worktree may
+            # hold CRLF, and both must produce the same record.
+            crlf = root / "sample.gitignore"
+            crlf.write_bytes(b"build/\r\nwork/\r\n")
+            lf = root / "sample-lf.gitignore"
+            lf.write_bytes(b"build/\nwork/\n")
+            self.assertEqual(update_manifests.normalized_bytes(crlf),
+                             update_manifests.normalized_bytes(lf))
+            self.assertEqual(update_manifests.file_entry(crlf, "sample.gitignore"),
+                             update_manifests.file_entry(lf, "sample.gitignore"))
+            # The CommonJS test drivers are text too (they are not .js).
+            driver = root / "adapter.cjs"
+            driver.write_bytes(b"const a = 1;\r\nconst b = 2;\r\n")
+            self.assertNotIn(b"\r", update_manifests.normalized_bytes(driver))
+            # A binary payload keeps its exact bytes even with a text suffix.
+            binary = root / "not-really.txt"
+            binary.write_bytes(b"\x89PNG\r\n\x1a\n\x00\x00binary\r\n")
+            self.assertEqual(update_manifests.normalized_bytes(binary), binary.read_bytes())
+            self.assertFalse(update_manifests.is_text(binary.read_bytes()))
+
+    def test_file_manifest_records_checkout_independent_bytes(self):
+        from scripts import update_manifests
+
+        manifest = json.loads((REPOSITORY_ROOT / "FILE_MANIFEST.json").read_text(encoding="utf-8"))
+        entries = {entry["path"]: entry for entry in manifest["files"]}
+        # These six files differ between this Windows worktree and the committed
+        # blobs on both GitHub runners: suffixless text and the .cjs drivers.
+        for relative in (".gitignore", ".gitattributes", "LICENSE", "VERSION",
+                         "tests/cep_adapter.cjs", "tests/premiere_lifecycle.cjs",
+                         "tests/review_ptt_release.cjs", "tests/single_panel.cjs"):
+            self.assertIn(relative, entries, relative)
+            normalized = (REPOSITORY_ROOT / relative).read_bytes().replace(b"\r\n", b"\n")
+            self.assertEqual(entries[relative]["bytes"], len(normalized), relative)
+            self.assertEqual(entries[relative]["sha256"],
+                             hashlib.sha256(normalized).hexdigest(), relative)
+
     def test_file_manifest_version_is_the_candidate_version(self):
         manifest = json.loads((REPOSITORY_ROOT / "FILE_MANIFEST.json").read_text(encoding="utf-8"))
         version = (REPOSITORY_ROOT / "VERSION").read_text(encoding="utf-8").strip()

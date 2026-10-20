@@ -27,6 +27,8 @@ sh tests/shell/installer_tests.sh          # 沙箱目录，不写真实扩展�
 
 `-TestRoot` 必须指向尚不存在的目录。这些检查使用合成数据，不应操作真实工程或当前 Premiere 安装。自动化检查覆盖文件格式、安装与恢复逻辑及接口行为；涉及麦克风、按键、Premiere 和智能体的改动，还需在独立测试工程中验证完整流程。
 
+两个 GitHub 工作流中的 Python、Node、原生导入、shell 与打包检查相互独立：某一项失败时其他检查仍会执行，任何一项失败都会使工作流失败。`FILE_MANIFEST.json` 用 `python scripts/update_manifests.py --check` 校验；文本按内容识别并以 LF 换行计算哈希，因此全新检出与清单一致。
+
 ## 发布包
 
 源码包用白名单和泄漏扫描生成，默认写入 `output/`：

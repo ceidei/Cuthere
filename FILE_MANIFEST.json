@@ -1,8 +1,8 @@
 {
   "product": "Cuthere",
-  "version": "1.1.0-alpha.3",
+  "version": "1.1.0-alpha.4",
   "scope": "public cross-platform source tree; per-archive hashes are in the .manifest.json next to each release ZIP",
-  "hashing": "text files are hashed with LF line endings so the record does not depend on the checkout's core.autocrlf setting; the archive manifest hashes exact ZIP bytes",
+  "hashing": "text is detected from the content (UTF-8 without NUL bytes) and hashed with LF line endings, so the record does not depend on the checkout's core.autocrlf setting or on the file suffix; the archive manifest hashes exact ZIP bytes",
   "generated_by": "scripts/update_manifests.py",
   "files": [
     {
@@ -32,18 +32,18 @@
     },
     {
       "path": ".github/workflows/macos.yml",
-      "bytes": 3422,
-      "sha256": "a8c58b991e5086583a73ad275d09e3bbf59383af24a4379ce6230cb043711249"
+      "bytes": 4170,
+      "sha256": "662310642280f71219839e13ef704ac354ffa8e827582e232cdaa9d402f92915"
     },
     {
       "path": ".github/workflows/windows.yml",
-      "bytes": 1837,
-      "sha256": "d4da25aa68b52887e5d61221d1e00268ddcd5c8460de596deec6589d56e21075"
+      "bytes": 2418,
+      "sha256": "7a629a7fe8db6c303c33e151899eef599cd9a350e193025db6b9bdc23b89c28a"
     },
     {
       "path": ".gitignore",
-      "bytes": 201,
-      "sha256": "f944d9a6534906ca6f9705e59f01a1e5dac56186ab343a53c7ac55cb9071132b"
+      "bytes": 180,
+      "sha256": "273c0d71140da44b941ee7559a6e0a71ceff5fa16e6ac774ec11cf1ce2582e9e"
     },
     {
       "path": "AGENTS.md",
@@ -52,23 +52,23 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 3655,
-      "sha256": "4d650662caae66bb880841c6a7c2fb8c6d03c5fea158bc5040328115266f5fe7"
+      "bytes": 4681,
+      "sha256": "7498263a05319fafafdedb242f467fff1fb39c46fcd1e28e011eb724870d4136"
     },
     {
       "path": "LICENSE",
-      "bytes": 1104,
-      "sha256": "948a3042b68d216c851667ccc4e3a1fe783128f66a14f746ddd5d451359a4712"
+      "bytes": 1083,
+      "sha256": "3ff7bbd8d0c0fb946f6997ea55d946504f076e6c0a950de3b19047c31b4aeed5"
     },
     {
       "path": "README.md",
       "bytes": 7361,
-      "sha256": "8c52144c6cf2f768debc9ff55566cf76b517c4cd96b2d41388f34e864822fe0c"
+      "sha256": "b22165ef523f7cd5e7a88a12910068f9b49fb3b1f000be6a9d49519c9c447ac5"
     },
     {
       "path": "README.zh-CN.md",
       "bytes": 6469,
-      "sha256": "92250a88327f03987ed9e9d20862aa2c22bccc5122bfb97cd8f04c4965ad702e"
+      "sha256": "78b403fb718e92f295d20c53e74abfb8ac19d5bbcd1354fea2351e76693b324e"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
@@ -77,13 +77,13 @@
     },
     {
       "path": "VALIDATION.json",
-      "bytes": 3816,
-      "sha256": "f02efc4458af84a16890a0812b75a75566ad09bda58adc37d560ff739c0a08f6"
+      "bytes": 4125,
+      "sha256": "d3d84a807b198617d2dd7522fb74614993e7f090e52e60afe67a37295b056ac4"
     },
     {
       "path": "VERSION",
       "bytes": 14,
-      "sha256": "c8c66850b549d3dbbc2e66c8679eeedee6f48959a5fedeb63b0cdaafd614524b"
+      "sha256": "65afef6e9f7ce039fa9b8b7c937dfc32c9f10b6010094ff37237c4a444ce1d92"
     },
     {
       "path": "docs/AGENT_COMPATIBILITY.md",
@@ -102,8 +102,8 @@
     },
     {
       "path": "docs/DEVELOPMENT.md",
-      "bytes": 1939,
-      "sha256": "c2691cb17273a3adce96b8ec480046189c2fbb2e17acf413817981d7f18e20e2"
+      "bytes": 2295,
+      "sha256": "63c0aacc9326cb0258521c0311b131116412db2caba88d799e04926661c6e0a2"
     },
     {
       "path": "docs/LICENSING_AND_PRIVACY.md",
@@ -113,12 +113,12 @@
     {
       "path": "docs/MACOS.md",
       "bytes": 22809,
-      "sha256": "07fdcd63eed55e002ee77918fa75612bd1a071fcc5c3ce76128e7c0dfad4217c"
+      "sha256": "5dbdd5441a5400132fa3a478aa3c6f73577578ed479c297df6a18710756c2ec1"
     },
     {
       "path": "docs/RELEASE_STATUS.md",
-      "bytes": 4092,
-      "sha256": "158ea86fba5d1d0212375dca7985f425b3a3f7391d543be417535f1986c3b021"
+      "bytes": 4545,
+      "sha256": "62c5987fe2f0e7d05766d8d0af8d4fd28191e5360f5a233916d53ee35e8186d8"
     },
     {
       "path": "docs/TROUBLESHOOTING.md",
@@ -137,8 +137,8 @@
     },
     {
       "path": "docs/en/DEVELOPMENT.md",
-      "bytes": 2176,
-      "sha256": "c1239cdfc70b4f5ebd8a43a7fffd29bcfaba49c1332ff84e0e75c8171c4a5983"
+      "bytes": 2545,
+      "sha256": "72ebe265c080a3a9f82f84f1f487c943b0fcdf19e4db7f577d6f7b0a66b2e5f7"
     },
     {
       "path": "docs/en/LICENSING_AND_PRIVACY.md",
@@ -147,8 +147,8 @@
     },
     {
       "path": "docs/en/RELEASE_STATUS.md",
-      "bytes": 4604,
-      "sha256": "e35a253d74d73ebe1a13264feacfad9ecd4950cd411fa267f0da991ea778a005"
+      "bytes": 5051,
+      "sha256": "af06f8d9cc652c57fd725b9a387cad609fa08372b7764b8095f42f270063e73c"
     },
     {
       "path": "docs/en/TROUBLESHOOTING.md",
@@ -367,8 +367,8 @@
     },
     {
       "path": "scripts/update_manifests.py",
-      "bytes": 4392,
-      "sha256": "a80455e0f5260d963f9cff49e85b14c992dc7cf0463e30fd1ab0a4af4c543cdd"
+      "bytes": 4963,
+      "sha256": "d0d1bf20393dcc1872fa2f03d62415f414ae51a5c106322388d85c64382e8c57"
     },
     {
       "path": "services/__init__.py",
@@ -383,7 +383,7 @@
     {
       "path": "services/review_capture/__init__.py",
       "bytes": 1008,
-      "sha256": "67235fdfd360badf661b8d163deb9a8b8c7366ff2705a829e8822246bc1d1da1"
+      "sha256": "8d42cd7b2e40c2da24109c7511c7e9225597cbaeaf7b5d9322501d6eb4847399"
     },
     {
       "path": "services/review_capture/audio.py",
@@ -426,6 +426,11 @@
       "sha256": "a5152bfce19d2f9ab0d2535b60f49088e17f66effd191c71f709b64185217b36"
     },
     {
+      "path": "services/review_capture/identity.py",
+      "bytes": 2705,
+      "sha256": "9d1f79ff28e83fc2d71c358750c74480f3079b61305528e3e8320114e1a12f76"
+    },
+    {
       "path": "services/review_capture/manifest.schema.json",
       "bytes": 999,
       "sha256": "9d10eba806e8c751b5ee9bb6af6d5c728a84642dd8d2638732ed27a272462087"
@@ -452,8 +457,8 @@
     },
     {
       "path": "services/review_capture/worker.py",
-      "bytes": 62957,
-      "sha256": "3e843cd2c22543ba901a9b3fa724794dc014b360455a9c1eeca8e933f6905b2a"
+      "bytes": 63268,
+      "sha256": "6dfe405af4132e3c6173bb76dbb4f69ea09df44601100428bf628e9eda96de45"
     },
     {
       "path": "services/review_capture/worker_entry.py",
@@ -472,8 +477,8 @@
     },
     {
       "path": "tests/cep_adapter.cjs",
-      "bytes": 1377,
-      "sha256": "000829bd6e3b868c1b7602fc7a3d55b501a112e70acbe70b62383e12dd4a36ae"
+      "bytes": 1349,
+      "sha256": "69d9455a2aed4b2b8574d4eca1ac4a3599eabf212c4a3bf33a22251418235b83"
     },
     {
       "path": "tests/panel_install.ps1",
@@ -494,6 +499,11 @@
       "path": "tests/platform/test_bridge_status.py",
       "bytes": 3571,
       "sha256": "fbd898da51a8e75d89a4b7feec3243dc51793421784912556994de39ee6da884"
+    },
+    {
+      "path": "tests/platform/test_ci_workflows.py",
+      "bytes": 6213,
+      "sha256": "35dc13a626bd6aa1ff9988b161090f8825f3a61dfa1f3454099caa8f7da6e3a5"
     },
     {
       "path": "tests/platform/test_darwin_imports.py",
@@ -527,8 +537,8 @@
     },
     {
       "path": "tests/platform/test_release_build.py",
-      "bytes": 9085,
-      "sha256": "c8f15c2c6ea9815166523195bef6295b89cc611b8af3b2830d26ec59db10b84c"
+      "bytes": 11611,
+      "sha256": "c9f38e2cfbf125ddccaf1e7828f8c7e5c280df41a112760257eefdca5eb7c0ed"
     },
     {
       "path": "tests/platform/test_transcription_language.py",
@@ -537,8 +547,8 @@
     },
     {
       "path": "tests/premiere_lifecycle.cjs",
-      "bytes": 7286,
-      "sha256": "4dc47e57cafac9233b95fa5a61881d16c0802e0366144a1ab9879821bb31f167"
+      "bytes": 7183,
+      "sha256": "76ace3a083a8cc5d068042fd582e64e37d346b7d01c3963a3e02dcf408880983"
     },
     {
       "path": "tests/review/__init__.py",
@@ -547,13 +557,13 @@
     },
     {
       "path": "tests/review/test_review_capture.py",
-      "bytes": 20473,
-      "sha256": "2b3af5f03c97875c7d571ce5df94cd642991f5037d29628a5d03668d29e8c2ec"
+      "bytes": 29739,
+      "sha256": "63ac5c9052bf168132229b332953a20bd0e8b565662aac5922b680f99cebb553"
     },
     {
       "path": "tests/review_ptt_release.cjs",
-      "bytes": 939,
-      "sha256": "033e05b906f9dd0d539c0ae0be54f222bfe04ab3368d5ae93496979068b08292"
+      "bytes": 919,
+      "sha256": "574934f94977fb3e4a965f2ad95d1de1b3e60b0770d480637145e825696654b1"
     },
     {
       "path": "tests/shell/installer_tests.sh",
@@ -562,8 +572,8 @@
     },
     {
       "path": "tests/single_panel.cjs",
-      "bytes": 5320,
-      "sha256": "04ecb69ab4a318a01e0e20ecde40f47f3a56083748be98eb8f04436c129c7002"
+      "bytes": 5222,
+      "sha256": "e88d95e08b626de3e025b675009671036ab4c7e6a5fbb6caee5645409e1bb96b"
     },
     {
       "path": "tests/test_release_tools.py",

@@ -14,7 +14,7 @@ from __future__ import annotations
 import os
 import sys
 
-__version__ = "1.1.0-alpha.3"
+__version__ = "1.1.0-alpha.4"
 
 SUPPORTED_SIMULATIONS = ("darwin", "win32")
 

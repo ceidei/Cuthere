@@ -1,6 +1,6 @@
 # Cuthere on macOS
 
-> **Status: experimental (1.1.0-alpha.3).** The macOS code paths are written and covered by automated checks, but they have **not** run on a real Mac with Premiere Pro, a microphone and a Function key. No macOS CI run is claimed in this document; the workflow file is configuration. Use a test project, keep backups, and read [the acceptance checklist](#acceptance-checklist-for-a-real-mac) before trusting it.
+> **Status: experimental (1.1.0-alpha.4).** The macOS code paths are written and covered by automated checks, but they have **not** run on a real Mac with Premiere Pro, a microphone and a Function key. No macOS CI run is claimed in this document; the workflow file is configuration. Use a test project, keep backups, and read [the acceptance checklist](#acceptance-checklist-for-a-real-mac) before trusting it.
 
 ## Host scope: Apple silicon on macOS 14 or later
 
@@ -49,8 +49,8 @@ Everything that is not a Windows API is shared code:
 Unzip the candidate package into a normal folder (the archive root is the project root):
 
 ```bash
-unzip cuthere-1.1.0-alpha.3-macos-source.zip -d cuthere-1.1.0-alpha.3-macos-source
-cd cuthere-1.1.0-alpha.3-macos-source
+unzip cuthere-1.1.0-alpha.4-macos-source.zip -d cuthere-1.1.0-alpha.4-macos-source
+cd cuthere-1.1.0-alpha.4-macos-source
 ```
 
 Check the environment and the plan first:

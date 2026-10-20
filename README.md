@@ -4,7 +4,7 @@
 
 Hold **F8** while you watch the cut and speak. Cuthere keeps the recording, the transcript and the exact timeline position together, then hands the batch to a local coding agent that plans the change, builds a new sequence and reads the result back from Premiere.
 
-Current version: **1.1.0-alpha.3** — Windows 1.0.1 is the released path; macOS is an experimental candidate. The macOS candidate has automated checks only; it has not been exercised on real Mac hardware with Premiere, a microphone or F8.
+Current version: **1.1.0-alpha.4** — Windows 1.0.1 is the released path; macOS is an experimental candidate. The macOS candidate has automated checks only; it has not been exercised on real Mac hardware with Premiere, a microphone or F8.
 [Download](https://github.com/ceidei/cuthere/releases/latest) · [Tests and compatibility](docs/en/RELEASE_STATUS.md) · [中文说明](README.zh-CN.md)
 
 ## Features
@@ -57,8 +57,8 @@ The installer uses a per-user Python environment and backs up any previous insta
 The candidate source package unpacks to a folder containing `install.sh`:
 
 ```bash
-unzip cuthere-1.1.0-alpha.3-macos-source.zip -d cuthere-1.1.0-alpha.3-macos-source
-cd cuthere-1.1.0-alpha.3-macos-source
+unzip cuthere-1.1.0-alpha.4-macos-source.zip -d cuthere-1.1.0-alpha.4-macos-source
+cd cuthere-1.1.0-alpha.4-macos-source
 
 ./install.sh --check-only   # Python 3.11, FFmpeg, CEP folder, disk, host scope
 ./install.sh                # DEFAULT: prints the plan, writes nothing
