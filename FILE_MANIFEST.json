@@ -29,13 +29,13 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 1154,
-      "sha256": "bfd455888d38d8563a69949217f8f87a652bca8ee04f537568fcca10702d0066"
+      "bytes": 1153,
+      "sha256": "c3b11fd8f08acdc3d53c272c4645d7ef6091674125828d79250c8b4493a5144f"
     },
     {
       "path": "docs/AGENT_COMPATIBILITY.md",
-      "bytes": 1999,
-      "sha256": "d8069a162d8e80c3fbea462d16b65db6aa2215bdef3919d33fc0b4c2fe1eb948"
+      "bytes": 1850,
+      "sha256": "20e4717035d7f1991be6170a8367700ab369947c79ab6ecc9282400b5dd59dcf"
     },
     {
       "path": "docs/AGENT_WORKFLOW.md",
@@ -44,18 +44,18 @@
     },
     {
       "path": "docs/LICENSING_AND_PRIVACY.md",
-      "bytes": 2405,
-      "sha256": "0032f5cc52191d39bf7fc4211d66ceaa60fe140a87851a4843017c9f63ba20fd"
+      "bytes": 2403,
+      "sha256": "6e849464840d686d1df69db766fbe113ee117eb4e3ee42e38ff75b5755096e83"
     },
     {
       "path": "docs/RELEASE_STATUS.md",
-      "bytes": 4115,
-      "sha256": "6f0112e2245020b5e72355461940a644c1ae52a5bfbe90b948c2b9d139ddc14a"
+      "bytes": 3577,
+      "sha256": "128201de9fa8978818f17693e7144ea802406aeb16156b07f60597ef95653020"
     },
     {
       "path": "docs/TROUBLESHOOTING.md",
-      "bytes": 1831,
-      "sha256": "287f602a1c0d1473aa203921d2fe5f8b737cf1f5e60284b49a61780c33753c89"
+      "bytes": 1706,
+      "sha256": "87bce51d743f199f39e6200377885edbe58d9d06d74d6f06a4ebcfdd4d0f7d4e"
     },
     {
       "path": "engine/__init__.py",
@@ -154,8 +154,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 7131,
-      "sha256": "34e6808fa1e5fa33b06ff3ebaee8aa817a05ffa01438b6be0ade45c764a8671f"
+      "bytes": 7209,
+      "sha256": "3fc44028a273c573ee71ac081e1cec05c7f48cef6e51a198d6da93ecd3eecc45"
     },
     {
       "path": "requirements-dev.txt",
@@ -375,7 +375,7 @@
     {
       "path": "THIRD_PARTY_NOTICES.md",
       "bytes": 952,
-      "sha256": "fdf724fec9c810875e9ba6ba23f68b8b3c182c1e6ccbed44b802422f939c3207"
+      "sha256": "83534038f10b9aad904389cdd7bac8bcfb968bc311faae7b89ebf2d2ea0d3e53"
     },
     {
       "path": "uninstall.ps1",
