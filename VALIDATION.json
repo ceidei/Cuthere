@@ -1,0 +1,136 @@
+{
+  "product": "Cuthere",
+  "chinese_name": "剪这儿",
+  "version": "1.0.1",
+  "status": "LOCAL_PREMIERE_UI_UPDATE_ACCEPTED_ON_PREVIOUSLY_VERIFIED_WORKFLOW",
+  "base_workflow_acceptance": {
+    "version": "1.0.0",
+    "status": "WINDOWS_SINGLE_HOST_ACCEPTANCE_PASSED",
+    "checked_utc": "2026-10-20T06:48:53.093668+00:00",
+    "environment": {
+      "os": "Windows 11 Pro",
+      "build": "22621",
+      "premiere": "25.6.4",
+      "python": "3.11",
+      "agent": "local Codex desktop",
+      "transcription_model": "faster-whisper medium"
+    },
+    "real_f8_capture": {
+      "physical_user_keypress": true,
+      "audio_seconds": 4.4,
+      "saved_automatically": true,
+      "dropped_frames": 0,
+      "transcription_saved_automatically": true,
+      "anchor_timecode": "00:00:05:00",
+      "fps": 25,
+      "asr_homophone_errors_present": true
+    },
+    "handoff": {
+      "real_saved_batch_read_by_codex": true,
+      "note_count": 1,
+      "integrity_errors": 0
+    },
+    "edit": {
+      "agent_decision_and_dry_run": true,
+      "deleted_frames": [
+        125,
+        150
+      ],
+      "duration_before_frames": 300,
+      "duration_after_frames": 275,
+      "tracks": [
+        "video",
+        "audio left",
+        "audio right"
+      ],
+      "published_and_read_back": true
+    },
+    "native_premiere_exports": {
+      "before_seconds": 12,
+      "after_seconds": 11,
+      "decoded_picture_and_audio_checks": {
+        "video_25fps": true,
+        "video_275_frames": true,
+        "blue_before_frame_125": true,
+        "green_from_frame_125": true,
+        "no_removed_red_frames": true,
+        "audio_two_channels": true,
+        "audio_48khz": true,
+        "audio_before_440hz": true,
+        "audio_after_880hz": true,
+        "audio_level_preserved": true
+      },
+      "amplitude_ratio_before_cut": [
+        1.0,
+        1.0
+      ],
+      "amplitude_ratio_after_cut": [
+        1.0000127393974387,
+        1.0000131786904791
+      ]
+    },
+    "rollback": {
+      "all_sequences_restored": true,
+      "checkpoint_unchanged": true,
+      "new_version_preserved": true
+    },
+    "panel_close_and_reopen": "PASS",
+    "final_1_0_0_installation": "PASS",
+    "installed_code_matches_distribution": true,
+    "same_capture_components_as_real_f8_test": true,
+    "original_podcast_project_unchanged": true,
+    "automated_checks": {
+      "python_tests_passed": 37,
+      "node_tests_passed": 6,
+      "bridge_host_contract": "PASS",
+      "powershell_filesystem_cases_passed": 6,
+      "powershell_syntax": "PASS"
+    },
+    "not_tested": [
+      "second computer",
+      "other Premiere versions",
+      "WorkBuddy execution",
+      "fresh model download on an empty-cache machine",
+      "arbitrary complex effects, nested/multicam/speed timelines",
+      "full-film semantic/vector editing"
+    ],
+    "private_media_or_voice_or_project_or_credentials_included": false
+  },
+  "branding_checks": {
+    "status": "PASS",
+    "node_panel_and_bridge_tests_passed": 6,
+    "powershell_installation_compatibility_cases_passed": 6,
+    "cli_help_product": "Cuthere 1.0.0",
+    "skill_metadata_validation": "PASS",
+    "installation_scope": "temporary filesystem fixtures only",
+    "physical_f8_recording_repeated": false
+  },
+  "live_premiere_retest_after_rename": false,
+  "panel_title_and_visibility_helper_match": true,
+  "private_media_or_voice_or_project_or_credentials_included": false,
+  "ui_update_acceptance": {
+    "status": "PASS",
+    "checks": {
+      "installed_1_0_1": true,
+      "installed_panel_matches_candidate": true,
+      "installed_runtime_matches_candidate": true,
+      "original_project_hash_unchanged": true,
+      "all_sequences_unchanged": true,
+      "active_timeline_unchanged": true,
+      "preserved_project_is_open": true,
+      "bridge_identifies_as_cuthere": true,
+      "f8_is_armed": true,
+      "recording_idle": true,
+      "body_dark_background": true,
+      "live_scrollbar_width_8": true,
+      "white_scrollbar_pixels_removed": true
+    },
+    "original_capture_and_edit_workflow_changed": false,
+    "new_physical_f8_recording_performed": false,
+    "gui_observations": {
+      "extension_menu_name": "Cuthere · 剪这儿",
+      "scroll_down_and_up": "PASS"
+    },
+    "automated_node_tests_passed": 6
+  }
+}

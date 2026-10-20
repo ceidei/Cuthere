@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autovideoedit.local/schemas/premiere-review/edit-decisions-1.0.json",
+  "title": "Premiere review edit decisions",
+  "type": "object",
+  "required": ["schema_version", "session_id", "manifest_sha256", "project_path", "decisions"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "session_id": {"type": "string", "minLength": 8},
+    "manifest_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "project_path": {"type": "string", "minLength": 1},
+    "approved_by": {"type": ["string", "null"]},
+    "approved_at": {"type": ["string", "null"], "format": "date-time"},
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["note_id", "revision_id", "action", "approved"],
+        "properties": {
+          "note_id": {"type": "string", "minLength": 8},
+          "revision_id": {"type": "string", "minLength": 8},
+          "transcript_revision": {"type": ["integer", "null"], "minimum": 0},
+          "action": {"enum": ["delete_range", "gain_range", "no_change", "manual_review"]},
+          "approved": {"type": "boolean"},
+          "range_override": {
+            "oneOf": [
+              {"type": "null"},
+              {
+                "type": "object",
+                "required": ["start_ticks", "end_ticks", "sequence_id"],
+                "properties": {
+                  "start_ticks": {"type": "string", "pattern": "^-?[0-9]+$"},
+                  "end_ticks": {"type": "string", "pattern": "^-?[0-9]+$"},
+                  "sequence_id": {"type": "string", "minLength": 1}
+                },
+                "additionalProperties": false
+              }
+            ]
+          },
+          "gain_db": {"type": ["number", "null"], "minimum": -24, "maximum": 6},
+          "rationale": {"type": "string"},
+          "review_notes": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

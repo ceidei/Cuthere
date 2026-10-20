@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cuthere · 剪这儿</title>
+  <link rel="stylesheet" href="css/review_panel.css">
+  <link rel="stylesheet" href="css/bridge.css">
+</head>
+<body>
+  <header>
+    <div class="title-row"><div><h1>Cuthere · 剪这儿</h1><p id="project-label">正在读取 Premiere 工程…</p></div><span id="worker-status" class="pill">连接中</span></div>
+    <div class="bridge-summary" role="status">剪辑连接：<span id="bridge-status" class="status-stopped">连接中…</span></div>
+    <div class="device-row"><label for="device-select">麦克风</label><select id="device-select" disabled><option>正在检查设备…</option></select><button id="refresh-devices" class="quiet" title="重新扫描麦克风">↻</button></div>
+    <p class="device-hint">先用“系统默认”试录；若回听无声，选择实际连接的麦克风或输入通道。</p>
+  </header>
+  <main>
+    <section class="location-card">
+      <div class="section-label">当前位置</div>
+      <div id="playhead-label" class="timecode">读取中…</div>
+      <div id="sequence-label" class="subtle">请在 Premiere 序列时间线上定位</div>
+    </section>
+    <section class="ptt-card" aria-label="按住说话">
+      <div class="section-label">快捷录音</div>
+      <div class="ptt-key-row"><strong>按住 <span id="ptt-key-label">F8</span> 说话，松开自动保存</strong><label for="ptt-key">按键</label><select id="ptt-key"><option value="F8">F8</option><option value="F9">F9</option></select></div>
+      <p class="hint">单点：停在问题处，按住 F8 说话。区间：停在起点按住 F8，看到“起点已记录”后拖到终点，停稳后松开。已选片段或入点、出点也会作为区间；要用播放头拖动区间，请先取消选中片段并清除入点、出点。</p>
+    </section>
+    <section class="mode-row" aria-label="意见方式">
+      <label><input type="radio" name="mode" value="point" checked> 单点意见</label>
+      <label><input type="radio" name="mode" value="range"> 区间意见（按钮方式）</label>
+    </section>
+    <p id="mode-hint" class="hint" hidden>停在起点后点“开始区间意见”，拖到终点停稳，再点“结束并保存”。</p>
+    <div class="meter-row"><span>输入电平</span><meter id="level-meter" min="0" max="1" value="0"></meter><span id="level-text">—</span></div>
+    <div id="record-state" class="record-state">准备就绪</div>
+    <button id="retry-ptt" class="secondary full" hidden>重试关联这段录音</button>
+    <div id="record-controls" class="controls">
+      <button id="start-recording" class="primary" hidden disabled>● 开始录音</button>
+      <button id="lock-end" class="secondary" hidden disabled>锁定终点</button>
+      <button id="reselect-end" class="quiet" hidden disabled>重选终点</button>
+      <button id="stop-recording" class="danger" hidden disabled>■ 结束并保存</button>
+      <button id="cancel-recording" class="quiet" hidden disabled>取消</button>
+    </div>
+    <p id="range-state" class="range-state" hidden></p>
+    <div class="subhead"><h2>本批意见</h2><button id="new-session" class="quiet" disabled>新建一批</button></div>
+    <div id="notes-list" class="notes-list"><div class="empty">还没有意见</div></div>
+    <button id="package-notes" class="secondary full" disabled>发送本批意见</button>
+    <p class="hint">每条录音保存后自动转写。文字有误时修改该条并保存；发送后会同时生成文字动作清单。剪辑前仍会核对当前工程和时间线。</p>
+    <button id="revalidate-batch" class="quiet full" disabled>核对当前时间线</button>
+    <p class="hint">只读核对当前工程和时间线与录意见时是否一致；不会修改 Premiere。若时间线信息读取不全，会标记为人工复核。</p>
+    <div id="notice" class="notice" role="status"></div>
+    <details class="bridge-details">
+      <summary>连接诊断</summary>
+      <div class="bridge-row"><span>Premiere</span><span id="premiere-status">—</span></div>
+      <div class="bridge-row"><span>已处理指令</span><span id="commands-processed">0</span></div>
+      <div class="bridge-row"><span>错误</span><span id="errors">0</span></div>
+      <div class="bridge-row"><span>最近指令</span><span id="last-command">—</span></div>
+      <div id="bridge-dir" class="bridge-path"></div>
+      <div class="bridge-controls"><button id="start-btn" class="secondary">连接剪辑</button><button id="stop-btn" class="quiet" disabled>暂停连接</button></div>
+      <pre id="log" class="bridge-log"></pre>
+    </details>
+  </main>
+  <script src="js/cep_adapter.js"></script>
+  <script src="js/bridge.js"></script>
+  <script src="js/review_panel.js"></script>
+</body>
+</html>

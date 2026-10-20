@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autovideoedit.local/schemas/premiere-review-note-1.0.json",
+  "title": "Premiere review note",
+  "type": "object",
+  "required": ["schema_version", "session_id", "note_id", "revision_id", "mode", "project", "sequence", "location", "audio", "transcript", "status"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "session_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{8,80}$"},
+    "note_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{8,80}$"},
+    "revision_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{8,80}$"},
+    "mode": {"enum": ["point", "range", "inout", "selection"]},
+    "project": {"type": "object"},
+    "sequence": {"type": "object"},
+    "location": {"type": "object"},
+    "audio": {"type": "object"},
+    "transcript": {"type": "object"},
+    "status": {"type": "object"},
+    "events": {"type": "array", "items": {"type": "object"}}
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,21 @@
+name: 问题反馈
+description: 安装、录音、转写或剪辑问题
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: 软件版本
+      description: Windows、Premiere、工具版本，以及使用的本地代理。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 操作步骤、预期与实际结果
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 脱敏记录
+      description: 可提供安装日志、doctor报告或剪辑收据。请移除用户名、私人路径、客户信息及密钥；无需上传原媒体和工程。

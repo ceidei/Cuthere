@@ -1,0 +1,435 @@
+{
+  "source_components": [
+    {
+      "path": "engine/podcast_edit_runtime.py",
+      "sha256": "35573ccd424359898f67e1da26d8584ad15ee30cd6771575d23fd79ab73df1c9",
+      "bytes": 12445
+    },
+    {
+      "path": "engine/premiere_bridge.py",
+      "sha256": "bdcb8f6e9da6e0b414aad305408c191c2dd20285f02753ca9eb9d3339ea7fbcd",
+      "bytes": 17721
+    },
+    {
+      "path": "engine/premiere_roundtrip.py",
+      "sha256": "5ecda7b9acd464cd84f54a4c748c385197f86c4c0333d25ac100d7519b5e12eb",
+      "bytes": 12912
+    },
+    {
+      "path": "engine/review_edit_plan.py",
+      "sha256": "1641d0c806337b7d2e815bb28c084e07c3df72ce80cb59c7d54b94db6dced5ae",
+      "bytes": 16642
+    },
+    {
+      "path": "engine/review_notes.py",
+      "sha256": "7695837c872d42c36d3bc9f908718cec3098241dd60c8d58a8d7f2953bf92fad",
+      "bytes": 4411
+    },
+    {
+      "path": "premiere_cep/autovideoedit/CSXS/manifest.xml",
+      "sha256": "c2f32bbbf8be0453c39d2946e3aa3331cd2dc11522f89dfda525cb6ef325183d",
+      "bytes": 2947
+    },
+    {
+      "path": "premiere_cep/autovideoedit/index.html",
+      "sha256": "2e249e75c59e342cfb96723501ec6e5e8431d65470e1968c31a38e25de8f2ad9",
+      "bytes": 5977
+    },
+    {
+      "path": "premiere_cep/autovideoedit/js/hostscript.jsx",
+      "sha256": "187dd3a0b019fe16ac55d96afa5df82a739f57950cba909188a003cf1caff356",
+      "bytes": 21799
+    },
+    {
+      "path": "premiere_cep/autovideoedit/js/main.js",
+      "sha256": "dbf37e508b33527345d938876f48de30277f7e08ef5b97ad57f16ef7c29c1115",
+      "bytes": 17918
+    },
+    {
+      "path": "premiere_cep/autovideoedit/js/project_lifecycle.jsx",
+      "sha256": "f5be4eb93376f5852697a83ee0170636c495fb9feda987158658074faa88c56d",
+      "bytes": 12490
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/CSXS/manifest.xml",
+      "sha256": "8c536e1180ef38a8f18b08bd2d94d626974d894bdc67f351759ca8455e4a4b97",
+      "bytes": 1536
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/css/review_panel.css",
+      "sha256": "bf48369a507b4c8b0f71263b27a52379d15f929c31df820f68db328c9d0ee791",
+      "bytes": 3864
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/index.html",
+      "sha256": "5882b133ffab936fc41712478327c431b8612563763fa7eab691f394cf9cdac4",
+      "bytes": 4009
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/review_host.jsx",
+      "sha256": "c4c990fc674edd6b39654dfd30b048880c4942770e03371338a7f0fa80d2db7a",
+      "bytes": 10361
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/review_panel.js",
+      "sha256": "723641f10647a32e84d81dbe3393ee95160d5cf7501e083760f1fdd5b459da48",
+      "bytes": 60759
+    },
+    {
+      "path": "schemas/premiere_review/edit-decisions.schema.json",
+      "sha256": "192f9cab63bfd54bd92eba8a9ea7987d3a9b835e9c53ef8cd4158c86ad909719",
+      "bytes": 2027
+    },
+    {
+      "path": "scripts/edit_review_transcript.py",
+      "sha256": "f40a9291fd9af01c8aca99712bf956d5f8cbb86b3ce20666f294f5511754b7ea",
+      "bytes": 4704
+    },
+    {
+      "path": "scripts/podcast_edit.py",
+      "sha256": "d02c2fb4f49ba9e097479d1d0be0c869f767968bc9fd5abc5cc045af63ecae8a",
+      "bytes": 19244
+    },
+    {
+      "path": "scripts/premiere_roundtrip.py",
+      "sha256": "41993d8fb5fb9c47adf290adf8d6a93faaf03abde5083be83a19e6f1421934d3",
+      "bytes": 1856
+    },
+    {
+      "path": "scripts/prepare_review_edit_plan.py",
+      "sha256": "5d429f44f41ab5e26f380213d48259c50309a5802943912760102be9632d1e2f",
+      "bytes": 3563
+    },
+    {
+      "path": "scripts/read_review_batch.py",
+      "sha256": "c5247ec68d5016e5ae1929e6403439505080d1a95c56759c465900616c7b1a31",
+      "bytes": 14933
+    },
+    {
+      "path": "scripts/review_acceptance.py",
+      "sha256": "45f0d1f003ce2ee2c48bb24080df10fc5bc9d27edd27076e088d2d47b9e9d135",
+      "bytes": 6963
+    },
+    {
+      "path": "scripts/review_doctor.py",
+      "sha256": "b2f28a291506bb26609c0362d59165f84d1e24a2904c56145b06828828608735",
+      "bytes": 5071
+    },
+    {
+      "path": "scripts/transcribe_review_batch.py",
+      "sha256": "21ba046b797324b2d389b9a72e910b838bee30235a5f3435f31fe8da9c5397bd",
+      "bytes": 18962
+    },
+    {
+      "path": "scripts/transcribe_review_note.py",
+      "sha256": "60e224a7a7865d85dbf07f5a43e0bf76d1285d35c263549a1a9a6d42d26a1a22",
+      "bytes": 5955
+    },
+    {
+      "path": "services/review_capture/__init__.py",
+      "sha256": "9ebbab5cf2b6ba4fd67ebc55dd06e376fc43dd1d9a0f7f0209103eb7f2284e39",
+      "bytes": 102
+    },
+    {
+      "path": "services/review_capture/audio.py",
+      "sha256": "8b34c0be1314b24c18fcb56ee0ee27581be26254335e0f879a7f0320bc6eb4fb",
+      "bytes": 14018
+    },
+    {
+      "path": "services/review_capture/manifest.schema.json",
+      "sha256": "9d10eba806e8c751b5ee9bb6af6d5c728a84642dd8d2638732ed27a272462087",
+      "bytes": 999
+    },
+    {
+      "path": "services/review_capture/ptt.py",
+      "sha256": "21b3c49a30b7e9167be5a9e3c8c2e9a1f4080e8c14d6b2f091b008204b0aa667",
+      "bytes": 9444
+    },
+    {
+      "path": "services/review_capture/show_panel.py",
+      "sha256": "efad0fc745806f29d16326f2e575504cb5319c9724e06168313e342a2ec4387c",
+      "bytes": 4138
+    },
+    {
+      "path": "services/review_capture/storage.py",
+      "sha256": "68fd98e5569f05d90c46130275f1fe36f345867de53e85239459b7bebe8ef0f7",
+      "bytes": 9362
+    },
+    {
+      "path": "services/review_capture/timebase.py",
+      "sha256": "babb7fd97b2e81fd369104593cb9c8652765915e2426610d7c0d4b773ddf53c6",
+      "bytes": 5143
+    },
+    {
+      "path": "services/review_capture/worker.py",
+      "sha256": "fbfd48e743cc734a852cefe0db500861002ead9eb27727f11d64a027d7628e49",
+      "bytes": 59343
+    },
+    {
+      "path": "services/review_capture/worker_entry.py",
+      "sha256": "4014b8852b348528a44cd5192682329704da4a8ffb36c4e0c062772d92fc6e42",
+      "bytes": 357
+    },
+    {
+      "path": "services/review_transcription.py",
+      "sha256": "58267865c239b733be59880d59566773cff8613b220b8902ec7506da24d48354",
+      "bytes": 2718
+    },
+    {
+      "path": "tests/premiere_lifecycle.cjs",
+      "sha256": "c275901d56b987707c1152feccf0d3024498a4ff41c9b351615d4cf22f728312",
+      "bytes": 7022
+    },
+    {
+      "path": "tests/review/test_review_capture.py",
+      "sha256": "e57b5d6b99b5cdd173911a31465b5f1b5968e89f73e5020c2f1f306767fb5ece",
+      "bytes": 19921
+    },
+    {
+      "path": "tests/review_ptt_release.cjs",
+      "sha256": "bb1b62fa22a2bf57740ae66ce270c4247cebaae57389016f695e77283329c69a",
+      "bytes": 910
+    },
+    {
+      "path": "tests/unit/test_podcast_edit_runtime.py",
+      "sha256": "2aec22845620742bf4a796c1bc99500aca39aec06307d47d309a01d726443f38",
+      "bytes": 6741
+    },
+    {
+      "path": "tests/unit/test_premiere_bridge_lifecycle.py",
+      "sha256": "15db03d3fd0a3f912a4a26831d5678004aab085c2239e54b71c0964fa0f1dfed",
+      "bytes": 3926
+    }
+  ],
+  "release_changes": [
+    "curated source export",
+    "new installer and agent handoff",
+    "independent minimal CEP adapter",
+    "portable skill and documentation",
+    "scope and host restrictions recorded",
+    "single CEP extension and panel",
+    "bridge auto-start within capture panel",
+    "legacy bridge backup and retirement",
+    "install failure rollback and uninstall restore",
+    "one-panel and migration integration tests",
+    "live Windows/Premiere F8-to-agent-edit acceptance",
+    "explicit target sequence extraction and multi-sequence input guard",
+    "tested dependency lock",
+    "previous installation runtime record restored with panel rollback",
+    "UTF-8 CLI output",
+    "public privacy repack: generic test fixture, removed internal commit identifier, licensing and distribution notes",
+    "Cuthere branding with preserved installation IDs, protocol and copyright notice",
+    "1.0.1: thin dark scrollbars, dark native controls, actual installed Cuthere menu and UI verification"
+  ],
+  "adobe_sdk_file_included": false,
+  "previous_release": "1.0.0-rc.1",
+  "single_panel_changes": {
+    "added": [
+      "premiere_cep/review_capture_panel/css/bridge.css",
+      "premiere_cep/review_capture_panel/js/bridge.js",
+      "premiere_cep/review_capture_panel/js/hostscript.jsx",
+      "premiere_cep/review_capture_panel/js/project_lifecycle.jsx",
+      "scripts/panel_install.ps1",
+      "tests/panel_install.ps1",
+      "tests/single_panel.cjs"
+    ],
+    "modified": [
+      "README.md",
+      "VERSION",
+      "docs/RELEASE_STATUS.md",
+      "f8.ps1",
+      "install.ps1",
+      "premiere_cep/review_capture_panel/CSXS/manifest.xml",
+      "premiere_cep/review_capture_panel/index.html",
+      "scripts/cli.py",
+      "services/review_capture/show_panel.py",
+      "tests/premiere_lifecycle.cjs",
+      "uninstall.ps1"
+    ],
+    "removed": [
+      "premiere_cep/autovideoedit/CSXS/manifest.xml",
+      "premiere_cep/autovideoedit/index.html",
+      "premiere_cep/autovideoedit/js/cep_adapter.js",
+      "premiere_cep/autovideoedit/js/hostscript.jsx",
+      "premiere_cep/autovideoedit/js/main.js",
+      "premiere_cep/autovideoedit/js/project_lifecycle.jsx"
+    ]
+  },
+  "release_version": "1.0.1",
+  "product_name": "Cuthere",
+  "chinese_name": "剪这儿",
+  "source_distribution_sha256": "2bd3db847290fb1ce796f7f4848102b87a58f707a75c60d97249c579cfbd9426",
+  "pre_rename_capture_component_hashes": [
+    {
+      "path": "premiere_cep/review_capture_panel/css/bridge.css",
+      "sha256": "cfb7a426b32bbab675ce07c2d77dcc9f2be9562d82da1b40cb80e50b038dd204"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/css/review_panel.css",
+      "sha256": "bf48369a507b4c8b0f71263b27a52379d15f929c31df820f68db328c9d0ee791"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/CSXS/manifest.xml",
+      "sha256": "fbf5209ec7385e4b78a78844d59021a8ce79204879980e5b8ab74755884e16e7"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/index.html",
+      "sha256": "3f66495c7c23adc6f4fbc406977ae848973700829b3cfd65e62d0a5ca7f442ef"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/bridge.js",
+      "sha256": "a949a9d93c4e46a400754071bd484a7cce7ca008a425c42eb4f02c4cc176c17b"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/cep_adapter.js",
+      "sha256": "baf31d64ddbcf40bd34e6c3ee51ce4d6c781efdffa748a624903a70508e932f4"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/hostscript.jsx",
+      "sha256": "187dd3a0b019fe16ac55d96afa5df82a739f57950cba909188a003cf1caff356"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/project_lifecycle.jsx",
+      "sha256": "f5be4eb93376f5852697a83ee0170636c495fb9feda987158658074faa88c56d"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/review_host.jsx",
+      "sha256": "c4c990fc674edd6b39654dfd30b048880c4942770e03371338a7f0fa80d2db7a"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/review_panel.js",
+      "sha256": "723641f10647a32e84d81dbe3393ee95160d5cf7501e083760f1fdd5b459da48"
+    },
+    {
+      "path": "services/review_capture/__init__.py",
+      "sha256": "9ebbab5cf2b6ba4fd67ebc55dd06e376fc43dd1d9a0f7f0209103eb7f2284e39"
+    },
+    {
+      "path": "services/review_capture/audio.py",
+      "sha256": "8b34c0be1314b24c18fcb56ee0ee27581be26254335e0f879a7f0320bc6eb4fb"
+    },
+    {
+      "path": "services/review_capture/manifest.schema.json",
+      "sha256": "9d10eba806e8c751b5ee9bb6af6d5c728a84642dd8d2638732ed27a272462087"
+    },
+    {
+      "path": "services/review_capture/ptt.py",
+      "sha256": "21b3c49a30b7e9167be5a9e3c8c2e9a1f4080e8c14d6b2f091b008204b0aa667"
+    },
+    {
+      "path": "services/review_capture/show_panel.py",
+      "sha256": "8573ca3eac1539911ae6e78eae5be0a9972d5a99176de15122eecfa8f5f25c64"
+    },
+    {
+      "path": "services/review_capture/storage.py",
+      "sha256": "68fd98e5569f05d90c46130275f1fe36f345867de53e85239459b7bebe8ef0f7"
+    },
+    {
+      "path": "services/review_capture/timebase.py",
+      "sha256": "babb7fd97b2e81fd369104593cb9c8652765915e2426610d7c0d4b773ddf53c6"
+    },
+    {
+      "path": "services/review_capture/worker.py",
+      "sha256": "fbfd48e743cc734a852cefe0db500861002ead9eb27727f11d64a027d7628e49"
+    },
+    {
+      "path": "services/review_capture/worker_entry.py",
+      "sha256": "4014b8852b348528a44cd5192682329704da4a8ffb36c4e0c062772d92fc6e42"
+    },
+    {
+      "path": "scripts/transcribe_review_note.py",
+      "sha256": "60e224a7a7865d85dbf07f5a43e0bf76d1285d35c263549a1a9a6d42d26a1a22"
+    },
+    {
+      "path": "scripts/transcribe_review_batch.py",
+      "sha256": "21ba046b797324b2d389b9a72e910b838bee30235a5f3435f31fe8da9c5397bd"
+    }
+  ],
+  "capture_component_hashes": [
+    {
+      "path": "premiere_cep/review_capture_panel/css/bridge.css",
+      "sha256": "cfb7a426b32bbab675ce07c2d77dcc9f2be9562d82da1b40cb80e50b038dd204"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/css/review_panel.css",
+      "sha256": "5aad9a728d4696fffe3d7b64d1e25bfb2b96345fd22909a4e6ec5cb251f07274"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/CSXS/manifest.xml",
+      "sha256": "92d928e37ddcb80713bbb0aec099f718d1cf75de7c4f479dfed82fd61ee5f8f6"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/index.html",
+      "sha256": "b1334c6a690d52e84c4f575195834e934740bb5db8116c359f1f8d4b996e571a"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/bridge.js",
+      "sha256": "bc06407ea4572629c1f7e4f515b451e0715997aaa7c8e40ba367162fc202b4ce"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/cep_adapter.js",
+      "sha256": "baf31d64ddbcf40bd34e6c3ee51ce4d6c781efdffa748a624903a70508e932f4"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/hostscript.jsx",
+      "sha256": "bc0b6879f2b4cabd1dc3e6dc0d1f7ee1aa9860aea1d06f4f68f39be681d69fa1"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/project_lifecycle.jsx",
+      "sha256": "f5be4eb93376f5852697a83ee0170636c495fb9feda987158658074faa88c56d"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/review_host.jsx",
+      "sha256": "c4c990fc674edd6b39654dfd30b048880c4942770e03371338a7f0fa80d2db7a"
+    },
+    {
+      "path": "premiere_cep/review_capture_panel/js/review_panel.js",
+      "sha256": "723641f10647a32e84d81dbe3393ee95160d5cf7501e083760f1fdd5b459da48"
+    },
+    {
+      "path": "services/review_capture/__init__.py",
+      "sha256": "9ebbab5cf2b6ba4fd67ebc55dd06e376fc43dd1d9a0f7f0209103eb7f2284e39"
+    },
+    {
+      "path": "services/review_capture/audio.py",
+      "sha256": "8b34c0be1314b24c18fcb56ee0ee27581be26254335e0f879a7f0320bc6eb4fb"
+    },
+    {
+      "path": "services/review_capture/manifest.schema.json",
+      "sha256": "9d10eba806e8c751b5ee9bb6af6d5c728a84642dd8d2638732ed27a272462087"
+    },
+    {
+      "path": "services/review_capture/ptt.py",
+      "sha256": "21b3c49a30b7e9167be5a9e3c8c2e9a1f4080e8c14d6b2f091b008204b0aa667"
+    },
+    {
+      "path": "services/review_capture/show_panel.py",
+      "sha256": "6c83c5468fd0d7322b781abab3fea9e471902cfae5c065fe6cbff0d95f96b884"
+    },
+    {
+      "path": "services/review_capture/storage.py",
+      "sha256": "68fd98e5569f05d90c46130275f1fe36f345867de53e85239459b7bebe8ef0f7"
+    },
+    {
+      "path": "services/review_capture/timebase.py",
+      "sha256": "babb7fd97b2e81fd369104593cb9c8652765915e2426610d7c0d4b773ddf53c6"
+    },
+    {
+      "path": "services/review_capture/worker.py",
+      "sha256": "7daffa5dbf5515025f77435c1a6c0c0451f067216e3af6ed40c4ae1676155356"
+    },
+    {
+      "path": "services/review_capture/worker_entry.py",
+      "sha256": "4014b8852b348528a44cd5192682329704da4a8ffb36c4e0c062772d92fc6e42"
+    },
+    {
+      "path": "scripts/transcribe_review_note.py",
+      "sha256": "60e224a7a7865d85dbf07f5a43e0bf76d1285d35c263549a1a9a6d42d26a1a22"
+    },
+    {
+      "path": "scripts/transcribe_review_batch.py",
+      "sha256": "21ba046b797324b2d389b9a72e910b838bee30235a5f3435f31fe8da9c5397bd"
+    }
+  ],
+  "previous_public_archive_sha256": "064e7fe75f14076c36448ca58c3409a8aa1cdd430effada264e3250fd50da836"
+}

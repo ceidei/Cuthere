@@ -1,0 +1,31 @@
+:root{font-family:"Segoe UI","Microsoft YaHei",sans-serif;color:#e6e9ed;background:#24272b;font-size:13px}html,body{width:100%;min-height:100%;background-color:#24272b!important;color:#e6e9ed}*{box-sizing:border-box}body{margin:0}header{padding:14px 14px 12px;background:#2e3237;border-bottom:1px solid #444a50}.title-row,.device-row,.meter-row,.subhead{display:flex;align-items:center;gap:9px}.title-row{justify-content:space-between}h1{font-size:17px;margin:0 0 4px;font-weight:650}h2{font-size:14px;margin:0;font-weight:600}p{margin:0}.title-row p,.subtle,.section-label,.meter-row,.hint{color:#aeb6bf;font-size:11px}.pill{border-radius:999px;padding:4px 8px;background:#41474e;color:#c8d0d8;font-size:10px;white-space:nowrap}.pill.online{background:#194a35;color:#a7f0c5}.pill.offline{background:#572d2a;color:#ffc2b8}.device-row{margin-top:12px}.device-row label{color:#b8c0c8;white-space:nowrap}.device-row select{flex:1;min-width:0;background:#1d2023;color:#e6e9ed;border:1px solid #515960;border-radius:4px;padding:6px}.location-card{margin:14px;padding:12px;border:1px solid #41474e;border-radius:6px;background:#202327}.section-label{margin-bottom:5px}.timecode{font:600 19px Consolas,monospace;letter-spacing:.3px}.subtle{margin-top:4px}.mode-row{display:flex;gap:18px;padding:0 15px}.mode-row label{cursor:pointer}.mode-row input{vertical-align:-2px;accent-color:#43bb83}.hint{padding:8px 15px 2px;min-height:28px}.meter-row{padding:6px 15px;gap:8px}.meter-row meter{height:8px;flex:1}.record-state{margin:7px 14px 9px;padding:9px;border-radius:5px;background:#30353a;color:#c8d0d8}.record-state.recording{background:#5c2525;color:#ffd6d6;animation:pulse 1.2s infinite}.record-state.saved{background:#194a35;color:#b7f1ce}.record-state.error{background:#593e1d;color:#ffdfae}@keyframes pulse{50%{background:#772d2d}}.controls{display:flex;gap:7px;padding:0 14px 10px;flex-wrap:wrap}button{font:inherit;border:0;border-radius:4px;padding:8px 11px;color:#fff;cursor:pointer}button:disabled{opacity:.48;cursor:default}.primary{background:#16834d;font-weight:600}.secondary{background:#434a52}.danger{background:#a33b36;font-weight:600}.quiet{background:transparent;color:#c6cdd4;padding:6px 8px}.range-state{margin:0 14px 8px;padding:8px;background:#31373d;border-left:3px solid #5a9fcb;color:#cdd7e0;font-size:11px}.subhead{justify-content:space-between;margin:4px 14px 7px;padding-top:9px;border-top:1px solid #3a3f44}.notes-list{margin:0 14px 9px;max-height:245px;overflow:auto}.empty{padding:14px;color:#949da6;text-align:center;border:1px dashed #41474e;border-radius:5px}.note{padding:9px;margin-bottom:6px;border:1px solid #41474e;border-radius:5px;background:#2c3035}.note-head{display:flex;justify-content:space-between;font-weight:600}.note-meta{font-size:11px;color:#b2bbc4;margin-top:4px}.note-transcript{display:block;width:100%;margin-top:6px;line-height:1.45;overflow-wrap:anywhere;resize:vertical;background:#202327;color:#e6e9ed;border:1px solid #515960;border-radius:4px;padding:7px;font:inherit}.note-actions{display:flex;gap:5px;margin-top:6px}.note-actions button{font-size:11px;padding:5px 7px;background:#414850}.note audio{width:100%;height:27px;margin-top:6px}.full{display:block;width:calc(100% - 28px);margin:0 14px 10px}.notice{min-height:22px;padding:0 14px 12px;color:#b4c1cd;font-size:11px;overflow-wrap:anywhere}.notice.error{color:#ffaaa2}.notice.good{color:#9ee3b9}
+[hidden]{display:none!important}.ptt-card{margin:0 14px 10px;padding:11px 12px;border:1px solid #3d7658;border-radius:6px;background:#20372c}.ptt-key-row{display:flex;align-items:center;gap:8px}.ptt-key-row strong{flex:1;color:#b7f1ce}.ptt-key-row label{color:#aeb6bf;font-size:11px}.ptt-key-row select{background:#1d2023;color:#e6e9ed;border:1px solid #515960;border-radius:4px;padding:4px}.ptt-card .hint{padding:7px 0 0;min-height:0;line-height:1.5}
+
+
+
+/* Cuthere: keep all scrolling surfaces inside Premiere's dark workspace. */
+:root { color-scheme: dark; }
+html, body { overflow-x: hidden; }
+* { scrollbar-width: thin; scrollbar-color: #646b74 #24272b; }
+::-webkit-scrollbar { width: 8px; height: 8px; background: #24272b; }
+::-webkit-scrollbar-track { background: #24272b; }
+::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  background: #646b74;
+  border: 2px solid #24272b;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover { background: #8a939f; }
+::-webkit-scrollbar-thumb:active { background: #a4adba; }
+::-webkit-scrollbar-corner { background: #24272b; }
+::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+select, option, textarea, audio { color-scheme: dark; }
+option { background: #1d2023; color: #e6e9ed; }
+.device-hint { margin-top: 7px; color: #aeb6bf; font-size: 11px; line-height: 1.55; }
+button:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible {
+  outline: 2px solid #79ace3;
+  outline-offset: 2px;
+}
+meter::-webkit-meter-bar { background: #1d2023; border: 0; border-radius: 6px; }
+meter::-webkit-meter-optimum-value { background: #55b889; border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) { .record-state.recording { animation: none; } }

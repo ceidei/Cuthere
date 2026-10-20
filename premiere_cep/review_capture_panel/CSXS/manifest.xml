@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtensionManifest Version="7.0" ExtensionBundleId="com.autovideoedit.reviewcapture" ExtensionBundleVersion="1.3.1" ExtensionBundleName="Cuthere">
+  <ExtensionList>
+    <Extension Id="com.autovideoedit.reviewcapture.panel" Version="1.3.1" />
+  </ExtensionList>
+  <ExecutionEnvironment>
+    <HostList><Host Name="PPRO" Version="[24.0,99.9]" /></HostList>
+    <LocaleList><Locale Code="All" /></LocaleList>
+    <RequiredRuntimeList><RequiredRuntime Name="CSXS" Version="9.0" /></RequiredRuntimeList>
+  </ExecutionEnvironment>
+  <DispatchInfoList>
+    <Extension Id="com.autovideoedit.reviewcapture.panel">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>./index.html</MainPath>
+          <ScriptPath>./js/review_host.jsx</ScriptPath>
+          <CEFCommandLine>
+            <Parameter>--use-gl=angle</Parameter>
+            <Parameter>--use-angle=d3d11</Parameter>
+            <Parameter>--disable-features=Vulkan,DefaultANGLEVulkan,VulkanFromANGLE</Parameter>
+          </CEFCommandLine>
+        </Resources>
+        <Lifecycle><AutoVisible>true</AutoVisible><StartOn>applicationActivate</StartOn></Lifecycle>
+        <UI>
+          <Type>Panel</Type>
+          <Menu>Cuthere · 剪这儿</Menu>
+          <Geometry>
+            <Size><Width>420</Width><Height>620</Height></Size>
+            <MinSize><Width>385</Width><Height>500</Height></MinSize>
+          </Geometry>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+  </DispatchInfoList>
+</ExtensionManifest>
