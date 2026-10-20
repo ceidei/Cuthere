@@ -1,24 +1,30 @@
-# 代理兼容
+# 智能体兼容说明
 
-F8采音与意见文件不依赖特定模型。代理需要访问同一台Windows电脑上的工程和工具目录，并能执行本地Python/PowerShell命令；视觉判断还取决于该代理所用模型与可用媒体工具。
+Cuthere 通过本地文件和命令行交接意见。智能体需要访问运行 Premiere 的电脑、当前工程和 Cuthere 工具目录，并能执行 Python 与 PowerShell 命令。
 
-| 入口 | 当前状态 |
+| 智能体 | 状态 |
 |---|---|
-| Codex本地应用/CLI | 已在 Windows 的 Codex 桌面环境完成 F8 录音、意见交接、剪辑和 Premiere 读回测试；详见 [测试状态](RELEASE_STATUS.md) |
-| WorkBuddy本地 | 官方支持本地技能与脚本/CLI；已准备交接说明，尚未完成实机剪辑验收 |
-| 其他本地代理 | 可按相同CLI与文件契约接手，逐个验收 |
-| 仅云端沙箱 | 无法直接读取本机CEP文件桥，需另行建立本地执行器；本版本不提供远程传输 |
+| Codex 桌面应用 | 已在 Windows 完成录音、意见交接、剪辑写回与结果核对测试 |
+| WorkBuddy | 可按文件与命令行方式接入，完整剪辑流程待验证 |
+| 其他本地智能体或 CLI | 需要验证文件访问、命令执行与 Premiere 连接 |
+| 仅在云端运行的智能体 | 需要另配本地执行器，才能访问本机工程和 Premiere |
 
-Codex可打开本源码目录读取AGENTS.md和仓库技能。WorkBuddy可按其官方说明导入 `.agents/skills/cuthere/` 技能目录；若被复制至独立目录，先向代理提供本工具源码/安装位置及工程目录。也可直接将`AGENT_HANDOFF.md`交给代理，并要求阅读工具目录中的`docs/AGENT_WORKFLOW.md`。
+视觉判断取决于所用模型和可用的媒体工具。具体测试环境见[测试记录](RELEASE_STATUS.md)。
 
-当前“发送本批意见”只生成文件包；`handoff`生成接手提示。两者都不会自动启动代理、创建新聊天或发送消息。
+## 交接方法
 
-### 验证其他代理
+1. 在 Cuthere 面板点 **发送本批意见**。
+2. 从工具目录运行 `f8.ps1 handoff --project-root '<当前工程文件夹>'`。
+3. 把返回的 `AGENT_HANDOFF.md` 路径交给智能体，要求按意见生成新版本并核对。
 
-建议使用独立的 25 fps 测试工程，依次测试：读取意见批次、明确短区间删除的 dry-run、生成新版本、桥接写回、读回核对及回退。记录代理、模型和 Premiere 版本，再测试复杂意见的处理结果。
+Codex 可直接读取仓库中的 `AGENTS.md`。支持本地技能的智能体也可加载 `.agents/skills/cuthere/`，并读取[智能体工作流](AGENT_WORKFLOW.md)。
 
-参考文档：
+## 接入检查
+
+在独立的 25 fps 测试工程中，依次验证：读取意见、生成修改计划、预检、写回新版本、核对与恢复。记录智能体、模型和 Premiere 版本，再验证复杂意见。
+
+## 参考
 
 - [Codex AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
-- [WorkBuddy技能](https://www.workbuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Skills-Market)
-- [WorkBuddy连接器与CLI](https://open.workbuddy.cn/docs/connector)
+- [WorkBuddy 技能](https://www.workbuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Skills-Market)
+- [WorkBuddy 连接器与 CLI](https://open.workbuddy.cn/docs/connector)

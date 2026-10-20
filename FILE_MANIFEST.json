@@ -3,14 +3,14 @@
   "version": "1.0.1",
   "files": [
     {
-      "path": ".agents/skills/cuthere/agents/openai.yaml",
-      "bytes": 115,
-      "sha256": "24bb3f03934b045fe2b889ebd6a13486f902cb1a409b1d651c98c626a8d54ec1"
-    },
-    {
       "path": ".agents/skills/cuthere/SKILL.md",
       "bytes": 1634,
       "sha256": "b9dc8f1d2e97fb0c63ab04949da5c89eaff86b9afb7c5376e2ef68250d254a2f"
+    },
+    {
+      "path": ".agents/skills/cuthere/agents/openai.yaml",
+      "bytes": 115,
+      "sha256": "24bb3f03934b045fe2b889ebd6a13486f902cb1a409b1d651c98c626a8d54ec1"
     },
     {
       "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
@@ -29,33 +29,68 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 1153,
-      "sha256": "c3b11fd8f08acdc3d53c272c4645d7ef6091674125828d79250c8b4493a5144f"
+      "bytes": 663,
+      "sha256": "790651b671cfba857ca64bbdf0170c3cfced114c4777304104fedec1690c833d"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1083,
+      "sha256": "3ff7bbd8d0c0fb946f6997ea55d946504f076e6c0a950de3b19047c31b4aeed5"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5168,
+      "sha256": "8d3a461e4f00ed35b089e6ea292bebb810b97562a10155bcf8dc2ce1b45b60f9"
+    },
+    {
+      "path": "SOURCE_PROVENANCE.json",
+      "bytes": 16474,
+      "sha256": "77cb3088ab624c73d190fe2f885ff9026abeca8f26d7d0f65e8fdffbecc98576"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "bytes": 1288,
+      "sha256": "44be7084ecaaa3d8cc9e6fb7d233c2ce9b34aa3e35f0afddcdd6a9c75237a4a3"
+    },
+    {
+      "path": "VALIDATION.json",
+      "bytes": 2784,
+      "sha256": "54cc2288df642ccc684ba6cb0e5ea7f6aeec410621305eac0d3b89b746a92a4c"
+    },
+    {
+      "path": "VERSION",
+      "bytes": 7,
+      "sha256": "f34306bb50e2d2ec59c788b9013c5ac682ef7f7f69345a3e957e38c0b6ba2fdd"
     },
     {
       "path": "docs/AGENT_COMPATIBILITY.md",
-      "bytes": 1850,
-      "sha256": "20e4717035d7f1991be6170a8367700ab369947c79ab6ecc9282400b5dd59dcf"
+      "bytes": 1695,
+      "sha256": "973ee0385387039b636ef102396b4c713d6258b0ae6ca038be10b1dccff2f0b0"
     },
     {
       "path": "docs/AGENT_WORKFLOW.md",
-      "bytes": 5392,
-      "sha256": "dac68767464049fdd8ab3cebdfa8f78303cdb6da5004b5f5bb303756fadd227f"
+      "bytes": 5396,
+      "sha256": "26819cd97f3d15de6f03bb9838c9ff71d9bf3d97f1b937d439492010c62375ab"
+    },
+    {
+      "path": "docs/DEVELOPMENT.md",
+      "bytes": 1345,
+      "sha256": "5f5b9c43babbd9ce1552e8e57ee3dfd8f52b39dad14356e69b9f948ef54e8080"
     },
     {
       "path": "docs/LICENSING_AND_PRIVACY.md",
-      "bytes": 2403,
-      "sha256": "6e849464840d686d1df69db766fbe113ee117eb4e3ee42e38ff75b5755096e83"
+      "bytes": 1798,
+      "sha256": "cd1d2573e6be932db62ee8785a4faa430c38acfd24e67a0b6552d98989eaef70"
     },
     {
       "path": "docs/RELEASE_STATUS.md",
-      "bytes": 3577,
-      "sha256": "128201de9fa8978818f17693e7144ea802406aeb16156b07f60597ef95653020"
+      "bytes": 2306,
+      "sha256": "b493054d5c5af7801d010871d1be993abc9f3e968cfe29d3cf5fd73d83859067"
     },
     {
       "path": "docs/TROUBLESHOOTING.md",
-      "bytes": 1706,
-      "sha256": "87bce51d743f199f39e6200377885edbe58d9d06d74d6f06a4ebcfdd4d0f7d4e"
+      "bytes": 2171,
+      "sha256": "8329ea0636ae6f5ccf098ea4be644f4e5ae2462ab433ffa9e7096e5d4523c798"
     },
     {
       "path": "engine/__init__.py",
@@ -98,9 +133,9 @@
       "sha256": "39174b00e90a638e4ebf346404ffb091616b26fa4ff5ec4885d1a8a408e20533"
     },
     {
-      "path": "LICENSE",
-      "bytes": 1083,
-      "sha256": "3ff7bbd8d0c0fb946f6997ea55d946504f076e6c0a950de3b19047c31b4aeed5"
+      "path": "premiere_cep/review_capture_panel/CSXS/manifest.xml",
+      "bytes": 1554,
+      "sha256": "92d928e37ddcb80713bbb0aec099f718d1cf75de7c4f479dfed82fd61ee5f8f6"
     },
     {
       "path": "premiere_cep/review_capture_panel/css/bridge.css",
@@ -111,11 +146,6 @@
       "path": "premiere_cep/review_capture_panel/css/review_panel.css",
       "bytes": 5167,
       "sha256": "5aad9a728d4696fffe3d7b64d1e25bfb2b96345fd22909a4e6ec5cb251f07274"
-    },
-    {
-      "path": "premiere_cep/review_capture_panel/CSXS/manifest.xml",
-      "bytes": 1554,
-      "sha256": "92d928e37ddcb80713bbb0aec099f718d1cf75de7c4f479dfed82fd61ee5f8f6"
     },
     {
       "path": "premiere_cep/review_capture_panel/index.html",
@@ -151,11 +181,6 @@
       "path": "premiere_cep/review_capture_panel/js/review_panel.js",
       "bytes": 60759,
       "sha256": "723641f10647a32e84d81dbe3393ee95160d5cf7501e083760f1fdd5b459da48"
-    },
-    {
-      "path": "README.md",
-      "bytes": 7544,
-      "sha256": "d30158336c22f19d64eb044aca68caccc7fba326b9ced392a35d64cd0e8f47da"
     },
     {
       "path": "requirements-dev.txt",
@@ -303,11 +328,6 @@
       "sha256": "58267865c239b733be59880d59566773cff8613b220b8902ec7506da24d48354"
     },
     {
-      "path": "SOURCE_PROVENANCE.json",
-      "bytes": 16474,
-      "sha256": "77cb3088ab624c73d190fe2f885ff9026abeca8f26d7d0f65e8fdffbecc98576"
-    },
-    {
       "path": "tests/__init__.py",
       "bytes": 0,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
@@ -373,24 +393,9 @@
       "sha256": "15db03d3fd0a3f912a4a26831d5678004aab085c2239e54b71c0964fa0f1dfed"
     },
     {
-      "path": "THIRD_PARTY_NOTICES.md",
-      "bytes": 952,
-      "sha256": "83534038f10b9aad904389cdd7bac8bcfb968bc311faae7b89ebf2d2ea0d3e53"
-    },
-    {
       "path": "uninstall.ps1",
       "bytes": 3189,
       "sha256": "73b55fe1a38407906bda9ae80d39395504550053ea265257fdbc083ed8c99fb8"
-    },
-    {
-      "path": "VALIDATION.json",
-      "bytes": 4422,
-      "sha256": "2ae5f8663feb51ac97a1c1687903c3e4b9d29423f5bbbc9b7cd0e3f1a2db4517"
-    },
-    {
-      "path": "VERSION",
-      "bytes": 7,
-      "sha256": "f34306bb50e2d2ec59c788b9013c5ac682ef7f7f69345a3e957e38c0b6ba2fdd"
     }
   ]
 }

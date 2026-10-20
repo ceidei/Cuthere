@@ -1,20 +1,17 @@
 {
   "product": "Cuthere",
-  "chinese_name": "剪这儿",
   "version": "1.0.1",
-  "status": "LOCAL_PREMIERE_UI_UPDATE_ACCEPTED_ON_PREVIOUSLY_VERIFIED_WORKFLOW",
-  "base_workflow_acceptance": {
-    "version": "1.0.0",
-    "status": "WINDOWS_SINGLE_HOST_ACCEPTANCE_PASSED",
-    "checked_utc": "2026-10-20T06:48:53.093668+00:00",
-    "environment": {
-      "os": "Windows 11 Pro",
-      "build": "22621",
-      "premiere": "25.6.4",
-      "python": "3.11",
-      "agent": "local Codex desktop",
-      "transcription_model": "faster-whisper medium"
-    },
+  "test_date": "2026-10-20",
+  "environment": {
+    "os": "Windows 11 Pro",
+    "build": "22621",
+    "premiere": "25.6.4",
+    "python": "3.11",
+    "agent": "local Codex desktop",
+    "transcription_model": "faster-whisper medium"
+  },
+  "workflow_tested_version": "1.0.0",
+  "workflow": {
     "real_f8_capture": {
       "physical_user_keypress": true,
       "audio_seconds": 4.4,
@@ -73,64 +70,29 @@
       "all_sequences_restored": true,
       "checkpoint_unchanged": true,
       "new_version_preserved": true
-    },
-    "panel_close_and_reopen": "PASS",
-    "final_1_0_0_installation": "PASS",
-    "installed_code_matches_distribution": true,
-    "same_capture_components_as_real_f8_test": true,
-    "original_podcast_project_unchanged": true,
-    "automated_checks": {
-      "python_tests_passed": 37,
-      "node_tests_passed": 6,
-      "bridge_host_contract": "PASS",
-      "powershell_filesystem_cases_passed": 6,
-      "powershell_syntax": "PASS"
-    },
-    "not_tested": [
-      "second computer",
-      "other Premiere versions",
-      "WorkBuddy execution",
-      "fresh model download on an empty-cache machine",
-      "arbitrary complex effects, nested/multicam/speed timelines",
-      "full-film semantic/vector editing"
-    ],
-    "private_media_or_voice_or_project_or_credentials_included": false
+    }
   },
-  "branding_checks": {
-    "status": "PASS",
-    "node_panel_and_bridge_tests_passed": 6,
-    "powershell_installation_compatibility_cases_passed": 6,
-    "cli_help_product": "Cuthere 1.0.0",
-    "skill_metadata_validation": "PASS",
-    "installation_scope": "temporary filesystem fixtures only",
-    "physical_f8_recording_repeated": false
+  "automated_checks": {
+    "python_tests_passed": 37,
+    "node_tests_passed": 6,
+    "bridge_host_contract": "PASS",
+    "powershell_filesystem_cases_passed": 6,
+    "powershell_syntax": "PASS"
   },
-  "live_premiere_retest_after_rename": false,
-  "panel_title_and_visibility_helper_match": true,
-  "private_media_or_voice_or_project_or_credentials_included": false,
-  "ui_update_acceptance": {
-    "status": "PASS",
-    "checks": {
-      "installed_1_0_1": true,
-      "installed_panel_matches_candidate": true,
-      "installed_runtime_matches_candidate": true,
-      "original_project_hash_unchanged": true,
-      "all_sequences_unchanged": true,
-      "active_timeline_unchanged": true,
-      "preserved_project_is_open": true,
-      "bridge_identifies_as_cuthere": true,
-      "f8_is_armed": true,
-      "recording_idle": true,
-      "body_dark_background": true,
-      "live_scrollbar_width_8": true,
-      "white_scrollbar_pixels_removed": true
-    },
-    "original_capture_and_edit_workflow_changed": false,
-    "new_physical_f8_recording_performed": false,
-    "gui_observations": {
-      "extension_menu_name": "Cuthere · 剪这儿",
-      "scroll_down_and_up": "PASS"
-    },
+  "ui_tested_version": "1.0.1",
+  "ui_checks": {
+    "extension_menu_name": "Cuthere · 剪这儿",
+    "dark_scrollbar": true,
+    "scrolling": "PASS",
+    "recording_and_edit_connections": "PASS",
     "automated_node_tests_passed": 6
-  }
+  },
+  "full_recording_and_edit_test_repeated_for_1_0_1": false,
+  "not_tested": [
+    "Other computers",
+    "Other Premiere versions",
+    "Other local agents including WorkBuddy",
+    "First model download and complete workflow with an empty cache",
+    "Complex effects, nested sequences, multicam, speed changes or other frame rates"
+  ]
 }

@@ -1,9 +1,19 @@
-# 外部组件
+# 第三方组件
 
-发行包只包含本工具源码，不分发Premiere、Codex、WorkBuddy、FFmpeg、Python、模型权重或Adobe CSInterface SDK。
+Cuthere 需要以下软件或组件。它们分别遵循自身许可证和使用条款。
 
-安装器从Python包索引安装sounddevice、faster-whisper及其依赖；可选从Hugging Face下载Systran/faster-whisper模型。各组件保留自身许可证和模型条款，不由本项目MIT许可证覆盖。运行环境依赖清单见requirements.txt，实际安装版本写入pip日志。用户自行准备FFmpeg及代理产品。
+| 组件 | 用途 | 获取方式 |
+|---|---|---|
+| Adobe Premiere Pro | 剪辑宿主 | 用户自行安装并取得授权 |
+| Python 3.11 | 本地运行环境 | 用户安装 Python，Cuthere 安装器创建独立环境 |
+| sounddevice 及依赖 | 麦克风录音 | 安装器从 Python 包索引获取 |
+| faster-whisper 及依赖 | 本地语音转写 | 安装器从 Python 包索引获取 |
+| Systran/faster-whisper 模型 | 语音识别权重 | 按需从 Hugging Face 下载 |
+| FFmpeg | 音视频处理与检查 | 用户或智能体按需安装 |
+| Codex、WorkBuddy 等智能体 | 理解意见并调用编辑工具 | 用户自行选择和配置 |
 
-CEP 面板通过项目自带的最小 `cep_adapter.js` 调用宿主原生接口。该适配层覆盖本工具所需的调用，已在 Premiere Pro 25.6.4 中测试；它不包含完整 Adobe SDK。
+Python 依赖及锁定版本见 [requirements.txt](requirements.txt) 和 [requirements-lock.txt](requirements-lock.txt)。模型和软件的许可不由本项目 MIT 许可替代。
 
-本项目为独立第三方扩展，未获Adobe官方认证或背书。Adobe and Adobe Premiere Pro are either registered trademarks or trademarks of Adobe in the United States and/or other countries. 分发方式见docs/LICENSING_AND_PRIVACY.md。
+项目自带的 `cep_adapter.js` 用于调用 Premiere 的 CEP 宿主接口；发行包不包含 Adobe CSInterface SDK。
+
+本项目为独立第三方扩展，未获 Adobe 官方认证或背书。Adobe and Adobe Premiere Pro are either registered trademarks or trademarks of Adobe in the United States and/or other countries.
