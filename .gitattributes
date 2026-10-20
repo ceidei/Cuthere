@@ -1,0 +1,4 @@
+# The POSIX entry points must be byte-for-byte executable on macOS and in CI:
+# a CRLF checkout makes /bin/sh fail with "bad interpreter". Scoped to shell
+# scripts only; every other file keeps Git's normal line-ending handling.
+*.sh text eol=lf

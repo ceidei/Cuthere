@@ -1,6 +1,8 @@
-# 智能体剪辑工作流
+# 接手当前F8意见
 
 本工具负责意见保存、核验和Premiere执行。你负责理解用户意图、选择必要证据、制定编辑决定并报告实际结果。先确认用户给出的工具根目录和当前 `.prproj` 所在工程目录；已有授权可延续，不重复询问已明确的修改。
+
+macOS 上安装后的入口是 `~/Library/Application Support/Cuthere/bin/cuthere`，子命令与下面的 `python scripts/cli.py ...` 相同；全局 F8/F9 还需系统辅助功能权限，面板按钮录音不依赖它。英文说明见 `docs/en/AGENT_WORKFLOW.md`。
 
 ## 读取与定位
 

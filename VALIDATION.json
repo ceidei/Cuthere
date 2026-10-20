@@ -1,6 +1,6 @@
 {
   "product": "Cuthere",
-  "version": "1.0.1",
+  "version": "1.1.0-alpha.3",
   "test_date": "2026-10-20",
   "environment": {
     "os": "Windows 11 Pro",
@@ -73,8 +73,8 @@
     }
   },
   "automated_checks": {
-    "python_tests_passed": 37,
-    "node_tests_passed": 6,
+    "python_tests_passed": 182,
+    "node_tests_passed": 14,
     "bridge_host_contract": "PASS",
     "powershell_filesystem_cases_passed": 6,
     "powershell_syntax": "PASS"
@@ -88,11 +88,26 @@
     "automated_node_tests_passed": 6
   },
   "full_recording_and_edit_test_repeated_for_1_0_1": false,
+  "candidate_1_1_0_alpha_3": {
+    "status": "AUTOMATED_CHECKS_ONLY",
+    "windows_regression": "Automated checks on the development host; no new physical Premiere or microphone acceptance.",
+    "macos_hardware_acceptance": "NOT_PERFORMED",
+    "macos_ci_run": "NOT_RUN",
+    "macos_scope": "Apple silicon (arm64) on macOS 14.0 or later; Intel Macs and older macOS are refused before any change because onnxruntime==1.31.0 has no macOS x86_64 wheel and its arm64 wheel requires macOS 14.",
+    "evidence": "docs/en/RELEASE_STATUS.md",
+    "notes": [
+      "The 1.0.0/1.0.1 records above are historical and unchanged.",
+      "The macOS distribution is experimental until docs/MACOS.md#acceptance-checklist-for-a-real-mac is completed on real hardware.",
+      "No permission, physical F8/F9 press, microphone capture, CEP load or agent handoff on macOS is claimed.",
+      "The configured macOS workflow installs and imports the runtime and PyObjC on a real Darwin runner, but no run of it is claimed here."
+    ]
+  },
   "not_tested": [
     "Other computers",
     "Other Premiere versions",
     "Other local agents including WorkBuddy",
     "First model download and complete workflow with an empty cache",
-    "Complex effects, nested sequences, multicam, speed changes or other frame rates"
+    "Complex effects, nested sequences, multicam, speed changes or other frame rates",
+    "macOS hardware, permissions, Function keys, microphone capture or Premiere loading the panel"
   ]
 }

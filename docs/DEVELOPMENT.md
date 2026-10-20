@@ -6,9 +6,9 @@
 
 ```powershell
 python -m pip install -r requirements-dev.txt
-python -m pytest tests/review tests/unit tests/test_release_tools.py tests/test_sequence_selection.py -q
+python -m pytest tests -q
 node tests/premiere_lifecycle.cjs
-node --test tests/review_ptt_release.cjs tests/cep_adapter.cjs tests/single_panel.cjs
+node --test tests/review_ptt_release.cjs tests/cep_adapter.cjs tests/single_panel.cjs tests/panel_platform.cjs
 ```
 
 安装与恢复检查使用独立的临时目录：
@@ -17,9 +17,26 @@ node --test tests/review_ptt_release.cjs tests/cep_adapter.cjs tests/single_pane
 .\tests\panel_install.ps1 -TestRoot 'D:\CuthereTests\fresh-run'
 ```
 
-`-TestRoot` 必须指向尚不存在的目录。这些检查使用合成数据，不应操作真实工程或当前 Premiere 安装。
+macOS 使用：
 
-自动化检查覆盖文件格式、安装与恢复逻辑及接口行为。涉及麦克风、按键、Premiere 和智能体的改动，还需在独立测试工程中验证完整流程。
+```bash
+python3.11 -m pytest tests -q
+sh tests/shell/installer_tests.sh          # 沙箱目录，不写真实扩展目录或偏好设置
+./install.sh                               # 默认只输出计划
+```
+
+`-TestRoot` 必须指向尚不存在的目录。这些检查使用合成数据，不应操作真实工程或当前 Premiere 安装。自动化检查覆盖文件格式、安装与恢复逻辑及接口行为；涉及麦克风、按键、Premiere 和智能体的改动，还需在独立测试工程中验证完整流程。
+
+## 发布包
+
+源码包用白名单和泄漏扫描生成，默认写入 `output/`：
+
+```powershell
+python scripts/build_release.py --platform macos
+python scripts/build_release.py --platform windows
+```
+
+压缩包不包含测试套件、运行记录或模型权重。每个压缩包旁的 `.sha256` 和 `.manifest.json` 是该压缩包的权威校验记录；仓库根的 `FILE_MANIFEST.json` 只描述公开源码树。
 
 ## 提交修改
 

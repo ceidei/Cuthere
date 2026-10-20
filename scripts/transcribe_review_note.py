@@ -18,7 +18,14 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 
 from scripts.read_review_batch import is_within, safe_child, sha256_file
-from scripts.transcribe_review_batch import append_transcription, find_cached_model, transcribe_audio
+from scripts.transcribe_review_batch import (
+    AUTO_LANGUAGE,
+    append_transcription,
+    find_cached_model,
+    normalize_language,
+    runtime_language,
+    transcribe_audio,
+)
 from services.review_capture.storage import atomic_write_json, new_id, read_json, utc_now
 
 ID_PATTERN = re.compile(r"[0-9a-f]{32}\Z")
@@ -79,9 +86,13 @@ def main() -> int:
     parser.add_argument("--note-id", required=True)
     parser.add_argument("--job-id", default="")
     parser.add_argument("--model", choices=["tiny", "base", "small", "medium"], default="medium")
-    parser.add_argument("--language", default="zh")
+    parser.add_argument("--language", default=None,
+                        help="转写语言：默认读取安装配置，未配置时 auto（自动检测）；也可用 ISO 代码如 zh、en")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+    if args.language is None:
+        args.language = runtime_language()
+    args.language = normalize_language(args.language)
     args.session_id = _id(args.session_id, "批次编号")
     args.note_id = _id(args.note_id, "意见编号")
     project_root = args.project_root.resolve()

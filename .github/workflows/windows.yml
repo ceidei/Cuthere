@@ -1,0 +1,46 @@
+name: Windows regression checks
+
+on:
+  push:
+    branches: [main, feature/macos-english]
+  pull_request:
+
+jobs:
+  windows:
+    # The released 1.0.1 path is Windows; this job keeps the shared changes
+    # honest. It does not replace the recorded Premiere acceptance.
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
+      - name: Python tests
+        run: python -m pytest tests -q
+      - name: Node panel and bridge tests
+        run: |
+          node tests/premiere_lifecycle.cjs
+          node --test tests/review_ptt_release.cjs tests/cep_adapter.cjs tests/single_panel.cjs tests/panel_platform.cjs
+      - name: PowerShell syntax and filesystem cases
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          foreach ($file in @('install.ps1', 'uninstall.ps1', 'f8.ps1', 'scripts/panel_install.ps1', 'tests/panel_install.ps1')) {
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file), [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors) { throw "PowerShell syntax errors in $file" }
+          }
+          $root = Join-Path $env:RUNNER_TEMP ("cuthere-f8-" + [guid]::NewGuid().ToString('N'))
+          .\tests\panel_install.ps1 -TestRoot $root
+          .\install.ps1 | Out-Null
+          .\uninstall.ps1 | Out-Null
+      - name: Release allowlist and manifest check
+        run: |
+          python scripts/build_release.py --platform windows --dry-run
+          python scripts/update_manifests.py --check

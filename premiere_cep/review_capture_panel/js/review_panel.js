@@ -31,7 +31,22 @@
     var pttHotkey = "F8";
 
     function $(id) { return document.getElementById(id); }
-    function join(a, b) { return String(a).replace(/[\\/]+$/, "") + "\\" + String(b).replace(/^[\\/]+/, "").replace(/[\\/]/g, "\\"); }
+    // CEP runs the same panel on Windows and macOS. Everything platform-specific
+    // is decided in this one place: the tests drive it by injecting a process
+    // object that reports each platform, so the production code stays un-branched.
+    var processInfo = (typeof process !== "undefined" && process) || {};
+    function isMac() {
+        var platform = String((processInfo && processInfo.platform) ||
+            (typeof navigator !== "undefined" && navigator.platform) || "");
+        return /^(darwin|mac)/i.test(platform);
+    }
+    function sep() { return isMac() ? "/" : "\\"; }
+
+    function join(a, b) {
+        var root = String(a);
+        var parts = String(b).split(/[\\/]+/).filter(function (part) { return part; });
+        return root.replace(/[\\/]+$/, "") + sep() + parts.join(sep());
+    }
     function guid() {
         return "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx".replace(/x/g, function () { return Math.floor(Math.random() * 16).toString(16); });
     }
@@ -130,14 +145,15 @@
     }
     function launchWorker(callback) {
         runtimeConfig = readJson(runtimePath());
-        if (!runtimeConfig || !runtimeConfig.pythonw || !runtimeConfig.worker_entry || !runtimeConfig.ipc_root) {
+        var launcher = runtimeConfig && (runtimeConfig.launcher || runtimeConfig.pythonw);
+        if (!runtimeConfig || !launcher || !runtimeConfig.worker_entry || !runtimeConfig.ipc_root) {
             callback(new Error("没有找到录音助手配置；请先运行面板安装脚本")); return;
         }
         ipcRoot = runtimeConfig.ipc_root;
-        appRoot = ipcRoot.replace(/[\\/]+ipc(?:[\\/][^\\/]+)?[\\/]*$/i, "");
+        appRoot = runtimeConfig.app_root || ipcRoot.replace(/[\\/]+ipc(?:[\\/][^\\/]+)?[\\/]*$/i, "");
         ensureDirs();
         if (!visibilityLaunched && runtimeConfig.visibility_entry && window.cep.process && typeof window.cep.process.createProcess === "function") {
-            var visibilityLaunch = window.cep.process.createProcess(runtimeConfig.pythonw, runtimeConfig.visibility_entry, "--ipc-root", ipcRoot);
+            var visibilityLaunch = window.cep.process.createProcess(launcher, runtimeConfig.visibility_entry, "--ipc-root", ipcRoot);
             visibilityLaunched = !!(visibilityLaunch && visibilityLaunch.err === 0);
         }
         if (workerIsOnline()) { callback(null); return; }
@@ -146,7 +162,7 @@
             callback(new Error("当前 CEP 环境没有启动本机录音助手的接口")); return;
         }
         workerSpawned = true;
-        var processArgs = [runtimeConfig.pythonw, runtimeConfig.worker_entry, "--ipc-root", ipcRoot];
+        var processArgs = [launcher, runtimeConfig.worker_entry, "--ipc-root", ipcRoot];
         var launch = window.cep.process.createProcess.apply(window.cep.process, processArgs);
         if (!launch || launch.err !== 0) {
             workerSpawned = false;
@@ -258,6 +274,7 @@
         var currentPtt = readJson(join(join(ipcRoot, "ptt"), "current.json"));
         if (currentPtt && currentPtt.state === "idle") { currentPtt = null; }
         handlePushToTalk(currentPtt || (status && status.push_to_talk));
+        renderKeyBackend(status);
         if (!status || !status.active_recording) {
             if (!active) { $("level-meter").value = 0; $("level-text").textContent = "—"; }
             return;
@@ -282,6 +299,32 @@
         }
         $("level-meter").value = Math.min(1, recording.input_peak || 0);
         $("level-text").textContent = recording.elapsed_seconds.toFixed(1) + " 秒";
+    }
+    // Hold-to-record needs a platform key backend. When it is missing (for
+    // example macOS without Accessibility/Input Monitoring approval) say so
+    // visibly instead of silently ignoring F8; the buttons still work.
+    function renderKeyBackend(status) {
+        var element = $("key-backend");
+        if (!element) { return; }
+        var capability = (status && status.push_to_talk_capability) || {};
+        var diagnostic = readJson(join(ipcRoot, "ptt_key_diagnostic.json")) || {};
+        var armed = !!(status && status.push_to_talk_armed);
+        var text, kind;
+        if (capability.available === false) {
+            text = "按住录音不可用：" + (capability.reason || "当前平台没有可用的按键后端") + "（可先用下方按钮录音）";
+            kind = "warning";
+        } else if (diagnostic.permission === "missing" || diagnostic.backend === "unavailable") {
+            text = "按住录音未就绪：" + (diagnostic.reason || "系统权限不足") + "（可先用下方按钮录音）";
+            kind = "warning";
+        } else if (armed) {
+            text = "按住录音已就绪 · " + (capability.backend || "平台后端");
+            kind = "good";
+        } else {
+            text = "按住录音待命：Premiere 在前台且选好麦克风后生效 · " + (capability.backend || "平台后端");
+            kind = "";
+        }
+        element.textContent = text;
+        element.className = "bridge-path" + (kind ? " " + kind : "");
     }
     function handlePushToTalk(capture) {
         if (!capture || !capture.id || capture.id === pttHandledId) { return; }
@@ -752,14 +795,16 @@
         }
         return location.point ? location.point.time_label : "位置待确认";
     }
-    function noteDir(note) {
-        var normalized = projectPath.replace(/\//g, "\\");
-        var projectRoot = normalized.substring(0, normalized.lastIndexOf("\\"));
-        return join(join(join(join(projectRoot, "work\\premiere-review"), note.session_id), "notes"), note.note_id);
+    function parentDir(path) {
+        var normalized = String(path || "");
+        var index = Math.max(normalized.lastIndexOf("/"), normalized.lastIndexOf("\\"));
+        return index > 0 ? normalized.substring(0, index) : normalized;
+    }
+    function noteDir(note, path) {
+        return join(join(join(join(projectRootPath(path), "work" + sep() + "premiere-review"), note.session_id), "notes"), note.note_id);
     }
     function projectRootPath(path) {
-        var normalized = String(path || projectPath).replace(/\//g, "\\");
-        return normalized.substring(0, normalized.lastIndexOf("\\"));
+        return parentDir(path || projectPath);
     }
     function fileUrl(path) { return "file:///" + encodeURI(String(path).replace(/\\/g, "/")).replace(/#/g, "%23"); }
     function renderNotes(notes) {
@@ -771,7 +816,7 @@
             var title = document.createElement("span"); title.textContent = (index + 1 < 10 ? "0" : "") + (index + 1) + " · " + (note.mode === "range" ? "区间意见" : "单点意见");
             var transcript = note.transcript || {};
             var key = note.session_id + ":" + note.note_id;
-            var job = readJson(join(noteDir(note), "transcription\\job.json"));
+            var job = readJson(noteJobPath(note));
             var waiting = (transcriptionActive && transcriptionActive.key === key) ||
                 transcriptionQueue.some(function (item) { return item.key === key; });
             var transcriptState = transcript.edited_text ? "已修订" : transcript.state === "transcribed" ?
@@ -833,7 +878,7 @@
                 actions.appendChild(jump);
             }
             card.appendChild(actions);
-            var audioPath = noteDir(note) + "\\audio.wav";
+            var audioPath = join(noteDir(note), "audio.wav");
             var exists = null;
             try { exists = window.cep.fs.stat(audioPath); } catch (e) { exists = null; }
             if (exists && exists.err === 0) {
@@ -843,8 +888,10 @@
         });
     }
     function transcriptionKey(note) { return note.session_id + ":" + note.note_id; }
+    function noteJobPath(note, path) { return join(noteDir(note, path), "transcription" + sep() + "job.json"); }
     function transcriptionJobPath(item) {
-        return join(join(join(join(projectRootPath(item.projectPath), "work\\premiere-review"), item.sessionId), "notes"), item.noteId + "\\transcription\\job.json");
+        return join(join(join(join(projectRootPath(item.projectPath), "work" + sep() + "premiere-review"), item.sessionId), "notes"),
+            item.noteId + sep() + "transcription" + sep() + "job.json");
     }
     function queuePendingTranscriptions(notes) {
         notes.forEach(function (note) {
@@ -852,7 +899,7 @@
             if (note.status.recording !== "saved" && note.status.recording !== "interrupted") { return; }
             if (transcript.edited_text || transcript.state === "transcribed") { return; }
             var key = transcriptionKey(note);
-            var job = readJson(join(noteDir(note), "transcription\\job.json"));
+            var job = readJson(noteJobPath(note));
             if (transcriptionFailed[key] || (job && job.status === "failed")) { return; }
             if (job && job.status === "completed") { return; }
             enqueueTranscription(note, false);
@@ -911,6 +958,10 @@
         var args = [String(runtimeConfig.transcription_python), String(runtimeConfig.note_transcription_entry),
             "--project-root", projectRootPath(item.projectPath), "--session-id", item.sessionId,
             "--note-id", item.noteId, "--job-id", jobId, "--model", runtimeConfig.transcription_model || "medium"];
+        // The installer records the language it was told to use; without one the
+        // worker detects the spoken language instead of assuming a language.
+        var language = runtimeConfig.transcription_language || runtimeConfig.language;
+        if (language) { args.push("--language", String(language)); }
         var launch = window.cep.process.createProcess.apply(window.cep.process, args);
         if (!launch || launch.err !== 0) {
             finishTranscription(item, "后台转写没有启动（错误码 " + (launch ? launch.err : "未知") + "）");
@@ -1026,7 +1077,10 @@
         $("record-state").textContent = "准备就绪";
     }
     if (typeof module !== "undefined" && module.exports) {
-        module.exports = { releasePreviewSnapshot: releasePreviewSnapshot };
+        module.exports = {
+            releasePreviewSnapshot: releasePreviewSnapshot,
+            isMac: isMac, sep: sep, join: join, parentDir: parentDir, noteDir: noteDir, noteJobPath: noteJobPath
+        };
     }
     if (typeof document !== "undefined") { document.addEventListener("DOMContentLoaded", init); }
 }());

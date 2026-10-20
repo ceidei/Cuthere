@@ -5,7 +5,6 @@ import tempfile
 import unittest
 import wave
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import patch
 
 from services.review_capture.audio import _finalize_raw_pcm, recover_interrupted_capture
@@ -41,6 +40,57 @@ class FakeRecorder:
 
     def summary(self):
         return {"samples_input": self.samples, "dropped_frames": 0}
+
+
+class FakeKeyBackend:
+    """Platform-neutral stand-in for a key backend (Windows or macOS)."""
+
+    backend = "fake"
+
+    def __init__(self, down: bool = True, foreground: bool = True, press_on_register: bool = True):
+        self.down = down
+        self.foreground = foreground
+        self.register_accepts = press_on_register
+        self.registered: list[str] = []
+        self.registered_key = None
+        self.pending_press = False
+
+    @property
+    def armed(self) -> bool:
+        return self.registered_key is not None
+
+    def set_key(self, key: str) -> None:
+        self.key = key
+
+    def set_armed(self, armed: bool) -> None:
+        if not armed:
+            self.registered_key = None
+
+    def register(self, key: str) -> bool:
+        if not self.register_accepts:
+            return False
+        if self.registered_key != key:
+            self.registered.append(key)
+        self.registered_key = key
+        return True
+
+    def unregister(self) -> None:
+        self.registered_key = None
+
+    def frontmost(self) -> bool:
+        return self.foreground
+
+    def poll(self, key: str):
+        pressed = self.pending_press
+        self.pending_press = False
+        return self.down, pressed, pressed
+
+    def poll_for(self, key: str, foreground: bool):
+        down, pressed, message = self.poll(key)
+        return (down and foreground), pressed, message
+
+    def close(self) -> None:
+        self.registered_key = None
 
 
 class ReviewCaptureTests(unittest.TestCase):
@@ -311,30 +361,14 @@ class ReviewCaptureTests(unittest.TestCase):
             self.assertEqual(audio.getnchannels(), 1)
 
     def test_push_to_talk_holds_until_key_release(self):
-        class KeyState:
-            down = True
-
-            def RegisterHotKey(self, *_args):
-                return 1
-
-            def UnregisterHotKey(self, *_args):
-                return 1
-
-            def PeekMessageW(self, *_args):
-                return 0
-
-            def GetAsyncKeyState(self, *_args):
-                return 0x8000 if self.down else 0
-
-        state = KeyState()
+        state = FakeKeyBackend(down=True)
         atomic_write_json(self.worker.ipc_root / "ptt_arm.json", {
             "hotkey": "F8", "enabled": True,
             "project_path": str(self.project), "session_id": "session_fixture_0001",
             "device": {"index": 0, "key": "fixture", "name": "Fixture mic"},
         })
-        with patch("services.review_capture.ptt._premiere_in_foreground", return_value=True), \
-             patch("services.review_capture.ptt.ctypes.windll", SimpleNamespace(user32=state)), \
-             patch("services.review_capture.ptt.MicrophoneRecorder", FakeRecorder):
+        with patch("services.review_capture.ptt.MicrophoneRecorder", FakeRecorder):
+            self.worker.ptt.backend = state
             self.worker.ptt.poll(panel_alive=True, manual_recording=False)
             self.assertEqual(self.worker.ptt.current["state"], "recording")
             self.worker.ptt.poll(panel_alive=True, manual_recording=False)
@@ -343,33 +377,21 @@ class ReviewCaptureTests(unittest.TestCase):
             self.worker.ptt.poll(panel_alive=True, manual_recording=False)
         self.assertEqual(self.worker.ptt.current["state"], "complete")
         self.assertTrue((Path(self.worker.ptt.current["capture_dir"]) / "audio.wav").is_file())
+        self.assertEqual(state.registered, ["F8"])
 
     def test_new_f8_after_unresolved_range_preserves_old_audio_and_starts_recording(self):
         old_id = self.prepared_ptt_capture("capture_stuck_fixture_0001")
         self.worker.ptt._save()
         old_audio = Path(self.worker.ptt.current["capture_dir"]) / "audio.wav"
 
-        class KeyState:
-            def RegisterHotKey(self, *_args):
-                return 1
-
-            def UnregisterHotKey(self, *_args):
-                return 1
-
-            def PeekMessageW(self, *_args):
-                return 0
-
-            def GetAsyncKeyState(self, *_args):
-                return 0x8000
-
+        state = FakeKeyBackend(down=True)
         atomic_write_json(self.worker.ipc_root / "ptt_arm.json", {
             "hotkey": "F8", "enabled": True,
             "project_path": str(self.project), "session_id": "session_drag_fixture_0001",
             "device": {"index": 0, "key": "fixture", "name": "Fixture mic"},
         })
-        with patch("services.review_capture.ptt._premiere_in_foreground", return_value=True), \
-             patch("services.review_capture.ptt.ctypes.windll", SimpleNamespace(user32=KeyState())), \
-             patch("services.review_capture.ptt.MicrophoneRecorder", FakeRecorder):
+        with patch("services.review_capture.ptt.MicrophoneRecorder", FakeRecorder):
+            self.worker.ptt.backend = state
             self.worker.ptt.poll(panel_alive=True, manual_recording=False)
 
         self.assertNotEqual(self.worker.ptt.current["id"], old_id)

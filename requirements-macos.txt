@@ -1,0 +1,14 @@
+# macOS runtime, Python 3.11 — Apple silicon (arm64) on macOS 14 or later.
+#
+# NOT YET VERIFIED ON MAC HARDWARE: these are the same pinned versions as the
+# Windows set. They are installed into the isolated virtual environment by
+# install.sh. The candidate is deliberately scoped to Apple silicon + macOS 14:
+# official PyPI metadata lists onnxruntime==1.31.0 for macOS 14+ arm64 only and
+# has no macOS x86_64 wheel, so install_macos.py refuses an Intel Mac or an
+# older macOS before writing anything. If an exact pin has no wheel for the
+# user's interpreter, pip reports the error and the installer rolls back.
+-r requirements-common.txt
+
+# The PyObjC key backend is optional and lives in
+# requirements-macos-optional.txt, so a missing wheel cannot make the panel
+# uninstallable. Without it, the panel's own Start/Stop buttons still record.

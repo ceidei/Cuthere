@@ -1,19 +1,49 @@
-# 第三方组件
+# Third-party components / 外部组件
 
-Cuthere 需要以下软件或组件。它们分别遵循自身许可证和使用条款。
+Cuthere itself is MIT-licensed (see `LICENSE`). The source package does not
+redistribute Adobe Premiere Pro, Codex, WorkBuddy, FFmpeg, Python, model
+weights or Adobe's CSInterface SDK. The components below are installed by the
+user or by the installer from package indexes; each keeps its own licence and
+terms.
 
-| 组件 | 用途 | 获取方式 |
+## Runtime and optional components
+
+| Component | Used for | Licence (upstream) |
 |---|---|---|
-| Adobe Premiere Pro | 剪辑宿主 | 用户自行安装并取得授权 |
-| Python 3.11 | 本地运行环境 | 用户安装 Python，Cuthere 安装器创建独立环境 |
-| sounddevice 及依赖 | 麦克风录音 | 安装器从 Python 包索引获取 |
-| faster-whisper 及依赖 | 本地语音转写 | 安装器从 Python 包索引获取 |
-| Systran/faster-whisper 模型 | 语音识别权重 | 按需从 Hugging Face 下载 |
-| FFmpeg | 音视频处理与检查 | 用户或智能体按需安装 |
-| Codex、WorkBuddy 等智能体 | 理解意见并调用编辑工具 | 用户自行选择和配置 |
+| Python 3.11 | Runtime, installer venv | PSF License |
+| sounddevice / PortAudio | Microphone capture | MIT |
+| faster-whisper | Local speech recognition | MIT |
+| CTranslate2 | Whisper inference backend | MIT |
+| PyAV (`av`) | Media decode/encode helpers | BSD-3-Clause |
+| NumPy | Audio sample handling | BSD-3-Clause |
+| huggingface_hub / hf-xet | Model cache access/download | Apache-2.0 |
+| tokenizers, onnxruntime, and the other pinned dependencies | Transitive runtime | Their published licences; see `requirements-common.txt` and the installed metadata |
+| FFmpeg (user-provided) | Media probing, decoding, encoding | LGPL-2.1-or-later, or GPL if the build enables GPL parts — check the build you install |
+| PyObjC (`Quartz`, `AppKit`, optional on macOS) | Global F8/F9 listen-only event tap | MIT |
+| Systran/faster-whisper model weights (downloaded only on request) | Transcription | The terms on the model card; weights are not bundled |
 
-Python 依赖及锁定版本见 [requirements.txt](requirements.txt) 和 [requirements-lock.txt](requirements-lock.txt)。模型和软件的许可不由本项目 MIT 许可替代。
+The installer writes pip output to `pip.log` / `pip-optional.log` in the
+versioned runtime folder, so the exact installed versions are recorded on the
+machine. `requirements-lock.txt`, `requirements-common.txt`,
+`requirements-macos.txt` and `requirements-macos-optional.txt` pin the
+versions this project was prepared with.
 
-项目自带的 `cep_adapter.js` 用于调用 Premiere 的 CEP 宿主接口；发行包不包含 Adobe CSInterface SDK。
+## Adobe
 
-本项目为独立第三方扩展，未获 Adobe 官方认证或背书。Adobe and Adobe Premiere Pro are either registered trademarks or trademarks of Adobe in the United States and/or other countries.
+The CEP panel uses this repository's own minimal
+`cep_adapter.js` to call the host APIs it needs. This is not the complete Adobe
+CSInterface SDK, and no Adobe SDK file is redistributed. The adapter was
+exercised against Premiere Pro 25.6.4 for the calls this tool uses. This is an
+independent third-party extension and is not certified, sponsored or endorsed
+by Adobe. Adobe and Adobe Premiere Pro are either registered trademarks or
+trademarks of Adobe in the United States and/or other countries.
+
+See `docs/en/LICENSING_AND_PRIVACY.md` for distribution and privacy details.
+
+## 中文摘要
+
+本发行包只包含本工具源码，不分发Premiere、Codex、WorkBuddy、FFmpeg、Python、模型权重或Adobe CSInterface SDK。
+
+安装器从Python包索引安装sounddevice、faster-whisper及其依赖；仅在显式要求时从Hugging Face下载Systran/faster-whisper模型。各组件保留自身许可证和模型条款，不由本项目MIT许可证覆盖。运行依赖清单见`requirements-common.txt`等文件，实际安装版本写入安装目录的pip日志。用户自行准备FFmpeg及代理产品。
+
+macOS可选的PyObjC（Quartz/AppKit）按MIT许可；缺失时面板按钮仍可录音，只是不能全局按住F8/F9。CEP面板使用本包自己实现的最小`cep_adapter.js`调用宿主原生接口，该适配层并非完整Adobe SDK。本项目为独立第三方扩展，未获Adobe官方认证或背书。Adobe and Adobe Premiere Pro are either registered trademarks or trademarks of Adobe in the United States and/or other countries.

@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,6 +28,27 @@ MODEL_REPOSITORIES = {
     "small": "models--Systran--faster-whisper-small",
     "medium": "models--Systran--faster-whisper-medium",
 }
+
+# "auto" lets faster-whisper detect the spoken language from the audio. 1.0
+# hard-coded Chinese here, which broke the documented English workflow.
+AUTO_LANGUAGE = "auto"
+LANGUAGE_PATTERN = re.compile(r"^(auto|[a-z]{2,3}([_-][A-Za-z0-9]{2,8})*)$")
+
+
+def normalize_language(value: object) -> str:
+    """Return a faster-whisper language code, or ``auto`` when it is empty/unknown."""
+    text = str(value or "").strip()
+    if not text:
+        return AUTO_LANGUAGE
+    if not LANGUAGE_PATTERN.fullmatch(text):
+        raise ValueError(f"不支持的转写语言：{text!r}（使用 auto 或 ISO 639 代码，如 zh、en）")
+    return text
+
+
+def whisper_language_argument(language: object) -> str | None:
+    """faster-whisper expects ``language=None`` to detect the language itself."""
+    normalized = normalize_language(language)
+    return None if normalized == AUTO_LANGUAGE else normalized
 
 
 def find_cached_model(model_name: str) -> Path:
@@ -55,9 +77,10 @@ def find_cached_model(model_name: str) -> Path:
 
 
 def transcribe_audio(model: Any, audio_path: Path, language: str) -> dict[str, Any]:
+    requested = normalize_language(language)
     segments_iter, info = model.transcribe(
         str(audio_path),
-        language=language,
+        language=whisper_language_argument(requested),
         beam_size=5,
         word_timestamps=True,
         vad_filter=False,
@@ -85,10 +108,12 @@ def transcribe_audio(model: Any, audio_path: Path, language: str) -> dict[str, A
             "avg_logprob": round(float(getattr(segment, "avg_logprob", 0.0)), 4),
             "no_speech_prob": round(float(getattr(segment, "no_speech_prob", 0.0)), 4),
         })
+    detected = getattr(info, "language", None) or requested
     return {
         "text": "".join(text_parts).strip(),
         "segments": segments,
-        "language": str(getattr(info, "language", language)),
+        "language": str(detected),
+        "language_request": requested,
         "language_probability": round(float(getattr(info, "language_probability", 0.0)), 4),
         "duration_seconds": round(float(getattr(info, "duration", 0.0)), 3),
     }
@@ -173,6 +198,7 @@ def append_transcription(
         "text": result["text"],
         "segments": result["segments"],
         "language": result["language"],
+        "language_request": result.get("language_request", AUTO_LANGUAGE),
         "language_probability": result["language_probability"],
         "duration_seconds": result["duration_seconds"],
         "model": model_name,
@@ -306,6 +332,23 @@ def _run_batch(args: argparse.Namespace) -> int:
     return 1 if output["failed"] or output.get("publication_error") else 0
 
 
+def runtime_language() -> str:
+    """Read the language recorded by the installer in the panel's runtime.json.
+
+    Falls back to ``auto`` when there is no installed configuration, so a source
+    checkout, a Windows install that stored ``zh`` and a fresh macOS install all
+    behave predictably without guessing.
+    """
+    try:
+        from services import platform_paths
+
+        config_path = platform_paths.extension_root() / platform_paths.PANEL_FOLDER / "runtime.json"
+        config = read_json(config_path) if config_path.is_file() else {}
+        return normalize_language(config.get("transcription_language") or config.get("language") or AUTO_LANGUAGE)
+    except Exception:
+        return AUTO_LANGUAGE
+
+
 def _pid_is_running(pid: Any) -> bool:
     try:
         os.kill(int(pid), 0)
@@ -320,9 +363,13 @@ def main() -> int:
     parser.add_argument("--session-id", default="")
     parser.add_argument("--job-id", default="")
     parser.add_argument("--model", choices=sorted(MODEL_REPOSITORIES), default="medium")
-    parser.add_argument("--language", default="zh")
+    # Default from the panel's runtime configuration (installer --language),
+    # otherwise auto-detect. An explicit --language on the command line wins.
+    parser.add_argument("--language", default=runtime_language(),
+                        help="转写语言：auto（默认/自动检测）或 ISO 代码如 zh、en")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+    args.language = normalize_language(args.language)
 
     project_root = args.project_root.resolve()
     session_id = args.session_id

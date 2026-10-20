@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import audioop
 import math
 import os
 import queue
@@ -20,6 +19,30 @@ TARGET_RATE = 48_000
 CHANNELS = 1
 SAMPLE_WIDTH = 2
 _STOP = object()
+
+
+def _audioop() -> Any:
+    """Load the PCM resampler lazily.
+
+    ``audioop`` was removed from the standard library in Python 3.13; the
+    ``audioop-lts`` backport provides the same ``ratecv`` there. Importing it at
+    module level made every import of the capture package fail on 3.13, so the
+    import happens only when a non-48 kHz device actually needs resampling.
+    """
+    try:
+        import audioop  # type: ignore[import-not-found]
+
+        return audioop
+    except ImportError:
+        try:
+            import audioop_lts as audioop  # type: ignore[import-not-found]
+
+            return audioop
+        except ImportError as exc:
+            raise RuntimeError(
+                "This Python has no 'audioop' module (removed in 3.13); install 'audioop-lts' "
+                "or record with a 48 kHz device"
+            ) from exc
 
 
 def enumerate_input_devices(sd_module: Any | None = None) -> list[dict[str, Any]]:
@@ -291,7 +314,7 @@ def _finalize_raw_pcm(raw_path: Path, partial_path: Path, wav_path: Path, input_
             if input_rate == TARGET_RATE:
                 converted = block
             else:
-                converted, state = audioop.ratecv(block, SAMPLE_WIDTH, CHANNELS, input_rate, TARGET_RATE, state)
+                converted, state = _audioop().ratecv(block, SAMPLE_WIDTH, CHANNELS, input_rate, TARGET_RATE, state)
             output.writeframesraw(converted)
     with partial_path.open("r+b") as stream:
         stream.flush()

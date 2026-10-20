@@ -1,4 +1,8 @@
-"""Single-instance Windows file-queue worker for Premiere review recordings."""
+"""Single-instance file-queue worker for Premiere review recordings.
+
+The same worker runs on Windows and macOS; only the platform backends (global
+key capture, panel visibility) and the single-instance lock differ.
+"""
 
 from __future__ import annotations
 
@@ -9,6 +13,7 @@ import logging
 import os
 import re
 import shutil
+import signal
 import sys
 import time
 import traceback
@@ -18,7 +23,8 @@ from pathlib import Path
 from typing import Any
 
 from .audio import MicrophoneRecorder, enumerate_input_devices, recover_interrupted_capture
-from .ptt import PushToTalk
+from .backends import keymonitor
+from .ptt import PushToTalk, backend_capability
 from .storage import (
     atomic_write_json,
     new_id,
@@ -36,7 +42,8 @@ WORKER_VERSION = "1.2.6"
 _ID = re.compile(r"^[A-Za-z0-9_-]{8,80}$")
 
 
-def _win_single_instance(lock_path: Path) -> Any:
+def _single_instance_lock(lock_path: Path) -> Any:
+    """Hold an exclusive lock for the life of the process, on every platform."""
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     stream = lock_path.open("a+b")
     if os.name == "nt":
@@ -135,28 +142,85 @@ class ReviewCaptureWorker:
         self._last_status_write = 0.0
         self.idle_timeout = idle_timeout
         self._shutdown_requested = False
-        self._lock_handle = _win_single_instance(ipc_root / "worker.lock")
-        self.ptt = PushToTalk(ipc_root)
-        self._recover_stale_recording()
-        self._write_status()
+        self._lock_handle = _single_instance_lock(ipc_root / "worker.lock")
+        try:
+            self.ptt_capability = backend_capability()
+            self.ptt = PushToTalk(ipc_root)
+            self._recover_stale_recording()
+            self._write_status()
+        except BaseException:
+            # A construction failure must not leave the lock open: otherwise
+            # every later start reports "already running" until the process
+            # that never finished starting has exited.
+            self._release_lock()
+            raise
+
+    def shutdown(self) -> None:
+        """Stop recordings, release the key backend and the single-instance lock.
+
+        Idempotent: only the first call performs the cleanup. Every step runs
+        even when an earlier one raises, and the lock is released last, so a
+        closed worker can be restarted (or a new helper can take over) without a
+        stale "already running" error. The lock *file* itself stays on disk.
+        """
+        if getattr(self, "_shutdown_done", 0) >= 1:
+            return
+        self._shutdown_done = 1
+        try:
+            try:
+                self.ptt.close()
+            except Exception:
+                logging.exception("releasing the key backend failed")
+            if self.recorder is not None:
+                try:
+                    self._interrupt_active("录音助手关闭，录音已自动停止")
+                except Exception:
+                    logging.exception("stopping the active recording failed")
+            try:
+                self._write_status()
+            except Exception:  # pragma: no cover - status publication is best effort
+                logging.warning("final status publication failed", exc_info=True)
+        finally:
+            self._release_lock()
+
+    def _release_lock(self) -> None:
+        """Close the single-instance lock handle; safe to call repeatedly."""
+        handle = getattr(self, "_lock_handle", None)
+        if handle is None:
+            return
+        try:
+            if not handle.closed:
+                handle.close()
+        except Exception:  # pragma: no cover - releasing a lock must never raise
+            logging.warning("closing the worker lock failed", exc_info=True)
 
     def run(self, once: bool = False) -> int:
-        while True:
-            commands = sorted(self.inbox.glob("*.json"), key=lambda p: p.name)
-            for path in commands:
-                self._process_file(path)
-            self._check_heartbeat_file()
-            self.ptt.poll(panel_alive=time.monotonic() - self.last_heartbeat < self.idle_timeout,
-                          manual_recording=self.recorder is not None)
-            if time.monotonic() - self._last_status_write >= (0.1 if self.ptt.current else 0.5):
-                self._write_status()
-            if once:
-                return 0
-            if self._shutdown_requested:
-                return 0
-            if self.recorder and time.monotonic() - self.last_heartbeat > self.idle_timeout:
-                self._interrupt_active("面板心跳超时，录音已自动停止")
-            time.sleep(0.02)
+        try:
+            while True:
+                commands = sorted(self.inbox.glob("*.json"), key=lambda p: p.name)
+                for path in commands:
+                    self._process_file(path)
+                self._check_heartbeat_file()
+                self.ptt.poll(panel_alive=time.monotonic() - self.last_heartbeat < self.idle_timeout,
+                              manual_recording=self.recorder is not None)
+                if time.monotonic() - self._last_status_write >= (0.1 if self.ptt.current else 0.5):
+                    self._write_status()
+                if once:
+                    return 0
+                if self._shutdown_requested:
+                    return 0
+                if self.recorder and time.monotonic() - self.last_heartbeat > self.idle_timeout:
+                    self._interrupt_active("面板心跳超时，录音已自动停止")
+                time.sleep(0.02)
+        finally:
+            # A closed panel, a quit Premiere or a killed worker must never leave
+            # the key tap open or a recording "stuck in progress".
+            self.shutdown()
+
+    def close(self) -> None:
+        """Graceful shutdown used by embedding code and the tests: same as SIGTERM."""
+        self._shutdown_requested = True
+        self.shutdown()
 
     def _check_heartbeat_file(self) -> None:
         try:
@@ -191,6 +255,10 @@ class ReviewCaptureWorker:
                 "updated_at": utc_now(),
                 "active_recording": active,
                 "push_to_talk": self.ptt.status(),
+                "push_to_talk_capability": self.ptt_capability,
+                "push_to_talk_armed": self.ptt.armed,
+                "push_to_talk_backend": self.ptt.backend_health(),
+                "platform": keymonitor.normalize_platform(),
             })
         except PermissionError as exc:
             # A stale status is recoverable on the next poll; crashing loses the hotkey.
@@ -1089,6 +1157,19 @@ def main(argv: list[str] | None = None) -> int:
         )
         logging.info("worker start version=%s python=%s", WORKER_VERSION, sys.version.split()[0])
         worker = ReviewCaptureWorker(args.ipc_root)
+
+        def _request_shutdown(_signum: int, _frame: Any) -> None:
+            # Exit the loop normally so run()'s finally block saves or parks any
+            # active recording and releases the key backend.
+            worker._shutdown_requested = True
+
+        for signal_name in ("SIGTERM", "SIGINT"):
+            signal_value = getattr(signal, signal_name, None)
+            if signal_value is not None:
+                try:
+                    signal.signal(signal_value, _request_shutdown)
+                except (ValueError, OSError):
+                    pass
         result = worker.run(once=args.once)
         logging.info("worker exit code=%s", result)
         return result

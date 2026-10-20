@@ -3,4 +3,5 @@
 .bridge-details{margin:4px 14px 14px;padding:10px;border:1px solid #41474e;border-radius:5px;font-size:11px}
 .bridge-details summary{cursor:pointer;color:#b8c0c8}.bridge-row{display:flex;justify-content:space-between;gap:10px;margin-top:8px}
 .bridge-row span:last-child{overflow-wrap:anywhere}.bridge-path{margin-top:8px;color:#949da6;overflow-wrap:anywhere}
+.bridge-path.good{color:#9ee3b9}.bridge-path.warning{color:#ddc28c}
 .bridge-controls{display:flex;gap:8px;margin-top:10px}.bridge-log{max-height:160px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#aeb6bf;font-size:10px;user-select:text}

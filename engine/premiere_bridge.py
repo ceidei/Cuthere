@@ -1,8 +1,9 @@
 """
 Premiere CEP Bridge — Python-side communication layer.
 
-Phase 3b: File-based communication between Cuthere (WSL/Linux)
-and Adobe Premiere Pro (Windows) via a shared filesystem bridge directory.
+File-based communication between Cuthere's local agent tooling and the
+Adobe Premiere Pro CEP panel through a shared filesystem bridge directory on
+Windows or macOS.
 
 Protocol:
   - WSL writes command files to Windows Temp directory
@@ -20,7 +21,8 @@ Directory structure:
       {uuid}.lock     # Atomicity guard
 
 Environment variables:
-  AVE_BRIDGE_DIR: Path to bridge directory (must be Windows-accessible)
+  CUTHERE_BRIDGE_DIR: preferred bridge directory override (both platforms)
+  AVE_BRIDGE_DIR:     legacy override kept for existing Windows installs and f8.ps1
 """
 
 from __future__ import annotations
@@ -42,16 +44,24 @@ from typing import Any, Optional
 
 import sys
 
-# Auto-detect default bridge directory by platform
+# Auto-detect default bridge directory by platform. These must match what the
+# installers put in the panel's runtime.json; services/platform_paths.py is the
+# single source of truth for them.
 if sys.platform == "win32":
-    DEFAULT_BRIDGE_DIR = os.environ.get("AVE_BRIDGE_DIR", r"C:\Users\Public\Documents\ave-bridge")
+    DEFAULT_BRIDGE_DIR = os.environ.get("CUTHERE_BRIDGE_DIR") or os.environ.get(
+        "AVE_BRIDGE_DIR", r"C:\Users\Public\Documents\ave-bridge"
+    )
 elif sys.platform == "darwin":
-    DEFAULT_BRIDGE_DIR = os.environ.get(
-        "AVE_BRIDGE_DIR",
-        os.path.expanduser("~/ave-bridge"),
+    _runtime = os.environ.get("CUTHERE_RUNTIME_ROOT") or os.path.expanduser(
+        "~/Library/Application Support/Cuthere"
+    )
+    DEFAULT_BRIDGE_DIR = (
+        os.environ.get("CUTHERE_BRIDGE_DIR")
+        or os.environ.get("AVE_BRIDGE_DIR")
+        or os.path.join(_runtime, "ave-bridge")
     )
 else:
-    DEFAULT_BRIDGE_DIR = os.environ.get(
+    DEFAULT_BRIDGE_DIR = os.environ.get("CUTHERE_BRIDGE_DIR") or os.environ.get(
         "AVE_BRIDGE_DIR",
         "/mnt/c/Users/Public/Documents/ave-bridge",
     )
@@ -447,7 +457,7 @@ def windows_to_wsl_path(win_path: str) -> str:
 
 def get_bridge_dir() -> str:
     """Get the bridge directory, creating it if needed."""
-    bridge_dir = os.environ.get("AVE_BRIDGE_DIR", DEFAULT_BRIDGE_DIR)
+    bridge_dir = os.environ.get("CUTHERE_BRIDGE_DIR") or os.environ.get("AVE_BRIDGE_DIR", DEFAULT_BRIDGE_DIR)
     os.makedirs(bridge_dir, exist_ok=True)
     os.makedirs(os.path.join(bridge_dir, "commands"), exist_ok=True)
     os.makedirs(os.path.join(bridge_dir, "responses"), exist_ok=True)

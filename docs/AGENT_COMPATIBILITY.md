@@ -1,30 +1,24 @@
-# 智能体兼容说明
+# 代理兼容
 
-Cuthere 通过本地文件和命令行交接意见。智能体需要访问运行 Premiere 的电脑、当前工程和 Cuthere 工具目录，并能执行 Python 与 PowerShell 命令。
+F8采音与意见文件不依赖特定模型。代理需要访问同一台运行 Premiere 的电脑上的工程和工具目录，并能执行本地 Python/命令行（Windows 也可用 PowerShell）；视觉判断还取决于该代理所用模型与可用媒体工具。CLI 与文件契约在 macOS 上相同，只是路径不同（`~/Library/Application Support/Cuthere/`）。
 
-| 智能体 | 状态 |
+| 入口 | 当前状态 |
 |---|---|
-| Codex 桌面应用 | 已在 Windows 完成录音、意见交接、剪辑写回与结果核对测试 |
-| WorkBuddy | 可按文件与命令行方式接入，完整剪辑流程待验证 |
-| 其他本地智能体或 CLI | 需要验证文件访问、命令执行与 Premiere 连接 |
-| 仅在云端运行的智能体 | 需要另配本地执行器，才能访问本机工程和 Premiere |
+| Codex本地应用/CLI | 基础工作流已有中文播客实用记录；1.0在Windows本地Codex桌面环境完成真实F8录音到按意见剪辑及宿主读回；详见RELEASE_STATUS |
+| WorkBuddy本地 | 官方支持本地技能与脚本/CLI；已准备交接说明，尚未完成实机剪辑验收 |
+| 其他本地代理 | 可按相同CLI与文件契约接手，逐个验收 |
+| 仅云端沙箱 | 无法直接读取本地CEP文件桥，需另行建立本地执行器；本版本不提供远程传输 |
 
-视觉判断取决于所用模型和可用的媒体工具。具体测试环境见[测试记录](RELEASE_STATUS.md)。
+macOS 上全局 F8/F9 需要给承载监听的进程授予辅助功能（部分系统还需输入监控）权限；没有权限时面板按钮仍可录音，代理仍可按意见工作。仓库与测试都不能代替用户授予这些系统权限。
 
-## 交接方法
+Codex可打开本源码目录读取AGENTS.md和仓库技能。WorkBuddy可按其官方说明导入 `.agents/skills/cuthere/` 技能目录；若被复制至独立目录，先向代理提供本工具源码/安装位置及工程目录。也可直接将`AGENT_HANDOFF.md`交给代理，并要求阅读工具目录中的`docs/AGENT_WORKFLOW.md`。
 
-1. 在 Cuthere 面板点 **发送本批意见**。
-2. 从工具目录运行 `f8.ps1 handoff --project-root '<当前工程文件夹>'`。
-3. 把返回的 `AGENT_HANDOFF.md` 路径交给智能体，要求按意见生成新版本并核对。
+当前“发送本批意见”只生成文件包；`handoff`生成接手提示。两者都不会自动启动代理、创建新聊天或发送消息。WorkBuddy本地技能试用与连接器市场上架是不同交付，本版本不声称已经符合市场上架条件。
 
-Codex 可直接读取仓库中的 `AGENTS.md`。支持本地技能的智能体也可加载 `.agents/skills/cuthere/`，并读取[智能体工作流](AGENT_WORKFLOW.md)。
+WorkBuddy验收：在隔离的25fps测试工程中，导入说明→读取一批意见→明确短删除dry-run→新候选→桥发布→读回→回退，再验证一条复杂中文意见，记录软件/模型版本与证据。通过后才能把兼容状态改为已验证。
 
-## 接入检查
-
-在独立的 25 fps 测试工程中，依次验证：读取意见、生成修改计划、预检、写回新版本、核对与恢复。记录智能体、模型和 Premiere 版本，再验证复杂意见。
-
-## 参考
+官方依据（2026-10-20核查）：
 
 - [Codex AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
-- [WorkBuddy 技能](https://www.workbuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Skills-Market)
-- [WorkBuddy 连接器与 CLI](https://open.workbuddy.cn/docs/connector)
+- [WorkBuddy技能](https://www.workbuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Skills-Market)
+- [WorkBuddy连接器与CLI](https://open.workbuddy.cn/docs/connector)

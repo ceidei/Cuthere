@@ -1,1 +1,4 @@
--r requirements-lock.txt
+# Platform-specific pinned runtime used by both installers.
+#   Windows: requirements-lock.txt    macOS: requirements-macos.txt
+-r requirements-lock.txt ; sys_platform == "win32"
+-r requirements-macos.txt ; sys_platform == "darwin"

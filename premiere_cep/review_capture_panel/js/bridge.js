@@ -5,10 +5,13 @@
 // executes them via ExtendScript (hostscript.jsx),
 // and writes response JSON files back.
 //
-// Bridge directory: C:\Users\Public\Documents\ave-bridge\
-//   commands/   ← Hermes writes command .json files here
+// Bridge directory comes from runtime.json (written by the installer):
+//   Windows: C:\Users\Public\Documents\ave-bridge\
+//   macOS:   ~/Library/Application Support/Cuthere/ave-bridge/
+//   commands/   ← the agent writes command .json files here
 //   responses/  ← Panel writes response .json files here
 //   locks/      ← Atomicity guards
+// The fallbacks below only apply when runtime.json is missing.
 
 (function () {
     "use strict";
@@ -21,6 +24,48 @@
     var POLL_INTERVAL_MS = 500;
     var STATUS_UPDATE_MS = 5000;
 
+    // Everything platform-specific is decided here, from the real CEP process
+    // object (or navigator on older engines). Tests inject a process object that
+    // reports each platform, so the production branches are what get tested.
+    function hostPlatform() {
+        var info = (typeof process !== "undefined" && process) || {};
+        return String(info.platform || (typeof navigator !== "undefined" && navigator.platform) || "");
+    }
+
+    function isMacHost() {
+        return /^(darwin|mac)/i.test(hostPlatform());
+    }
+
+    function getUserDataPath() {
+        try {
+            if (window.cep && window.cep.fs && typeof window.cep.fs.getSystemPath === "function") {
+                return window.cep.fs.getSystemPath("userData") || "";
+            }
+        } catch (e) { /* older engines: fall through to the documented default */ }
+        return "";
+    }
+
+    function fallbackBridgeDir() {
+        if (!isMacHost()) return "C:\\Users\\Public\\Documents\\ave-bridge";
+        // Matches services/platform_paths.py: <runtime>/ave-bridge under the
+        // per-user Application Support folder, not a machine-wide share. CEP's
+        // "userData" sits somewhere below ~/Library/Application Support, so cut
+        // it there rather than guessing the bundle/partition layout.
+        var userData = getUserDataPath().replace(/\\/g, "/").replace(/\/+$/, "");
+        var marker = "/Library/Application Support";
+        var index = userData.indexOf(marker);
+        if (index >= 0) {
+            return userData.slice(0, index + marker.length) + "/Cuthere/ave-bridge";
+        }
+        // CEP normally reports userData below Application Support. If it does
+        // not, use the real home from the CEP process environment rather than a
+        // literal "~" that cep.fs cannot expand; the tilde remains a last resort.
+        var env = (typeof process !== "undefined" && process && process.env) || {};
+        var home = String(env.HOME || env.USERPROFILE || "").replace(/\\/g, "/").replace(/\/+$/, "");
+        if (home) { return home + "/Library/Application Support/Cuthere/ave-bridge"; }
+        return "~/Library/Application Support/Cuthere/ave-bridge";
+    }
+
     function getBridgeDir() {
         var extensionPath = csInterface.getSystemPath(SystemPath.EXTENSION).replace(/\\/g, "/");
         var raw = fsReadFile(extensionPath + "/runtime.json");
@@ -28,15 +73,11 @@
             var config = JSON.parse(raw);
             if (typeof config.bridge_dir === "string" && config.bridge_dir) return config.bridge_dir;
         }
-        var platform = navigator.platform || "";
-        if (platform.indexOf("Mac") >= 0) {
-            return "/Users/Shared/ave-bridge";
-        }
-        return "C:\\Users\\Public\\Documents\\ave-bridge";
+        return fallbackBridgeDir();
     }
 
     function getSep() {
-        return (navigator.platform || "").indexOf("Mac") >= 0 ? "/" : "\\";
+        return isMacHost() ? "/" : "\\";
     }
 
     function joinPath(base, sub) {
@@ -442,6 +483,11 @@
         document.addEventListener("DOMContentLoaded", init);
     } else {
         init();
+    }
+
+    // Test hook only: CEP never defines `module`, so the panel is unchanged.
+    if (typeof module !== "undefined" && module.exports) {
+        module.exports = { hostPlatform: hostPlatform, isMacHost: isMacHost, fallbackBridgeDir: fallbackBridgeDir };
     }
 
 })();

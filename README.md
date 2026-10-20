@@ -1,93 +1,109 @@
 # Cuthere · 剪这儿
 
-**在 Premiere 里说出修改意见，让智能体接着剪。**
+**Say the note in Premiere. Let an agent make the edit.**
 
-按住 F8 说话，松开后自动保存录音、转写和时间线位置。提完一批意见，交给本地 Codex 等智能体，结合工程与音视频内容生成新的剪辑版本。
+Hold **F8** while you watch the cut and speak. Cuthere keeps the recording, the transcript and the exact timeline position together, then hands the batch to a local coding agent that plans the change, builds a new sequence and reads the result back from Premiere.
 
-当前版本：**1.0.1 · Windows 试用版**。[下载安装包](https://github.com/ceidei/cuthere/releases/latest) · [测试与兼容范围](docs/RELEASE_STATUS.md)
+Current version: **1.1.0-alpha.3** — Windows 1.0.1 is the released path; macOS is an experimental candidate. The macOS candidate has automated checks only; it has not been exercised on real Mac hardware with Premiere, a microphone or F8.
+[Download](https://github.com/ceidei/cuthere/releases/latest) · [Tests and compatibility](docs/en/RELEASE_STATUS.md) · [中文说明](README.zh-CN.md)
 
-## 功能
+## Features
 
-- **边看边提意见**：F8/F9 按住录音、松开保存，关联播放头、所选片段或时间区间。
-- **自动转写**：在本机将语音转成文字，支持回听和修订。
-- **批量交给智能体**：保留每条意见的录音、文字和位置，方便统一处理。
-- **按意见改片**：智能体结合工程、相关音视频和上下文制定修改方案，调用编辑工具生成新版本。
-- **保留原片**：使用新的工作工程与序列，支持结果核对和恢复。
+- **Comment while watching**: F8/F9 hold-to-record, release to save; a note is tied to the playhead, the selected clips or an in/out range.
+- **Transcribe locally**: speech becomes text on your own machine, with playback and manual corrections.
+- **Hand a batch to an agent**: every note keeps its audio, text and position so they can be processed together.
+- **Edit per note**: the agent combines the project, the relevant media and the context to plan changes and calls editing tools to produce a new version.
+- **Keep the original cut**: work happens in a new working project and sequence, with read-back checks and rollback.
 
-意见可以涉及声音、画面或音画关系。具体能完成的修改取决于所用智能体、可读取的媒体和可执行的编辑动作，详见[智能体工作流](docs/AGENT_WORKFLOW.md)。
+Notes can concern sound, picture or the relationship between them. What can actually be finished depends on the agent, the media it can read and the editing actions available; see the [agent workflow](docs/en/AGENT_WORKFLOW.md).
 
-## 安装
+## Install
 
-### 环境要求
+### Requirements
 
-| 组件 | 要求 |
+| Component | Requirement |
 |---|---|
-| 操作系统 | Windows |
-| 剪辑软件 | 支持 CEP 扩展的 Adobe Premiere Pro；已测试 25.6.4 |
-| Python | 3.11，包含 `py` 启动器 |
-| 媒体处理 | FFmpeg，供智能体处理和检查音视频 |
-| 智能体 | 可访问本机文件并执行命令的 Codex 或其他本地智能体 |
+| Operating system | Windows 10/11 |
+| Editing software | Adobe Premiere Pro with CEP support; tested with 25.6.4 |
+| Python | 3.11 with the `py` launcher |
+| Media processing | FFmpeg on `PATH`, used by the agent to inspect and process media |
+| Agent | Codex or another local agent that can access files and run commands |
 
-### 交给 Codex 安装
+### Install with an agent
 
-下载并解压[安装包](https://github.com/ceidei/cuthere/releases/latest)，把文件夹交给本地 Codex，发送：
+Download and unzip the [release package](https://github.com/ceidei/cuthere/releases/latest), give the folder to a local Codex session and send:
 
-> 请阅读 README.md，帮我安装 Cuthere，准备转写模型，并检查录音、转写和 Premiere 连接。使用独立测试工程验证，保留现有工程和插件备份。
+> Read README.md, install Cuthere for me, prepare the transcription model, and check recording, transcription and the Premiere connection. Use a separate test project and keep backups of the existing project and extensions.
 
-按提示保存当前工作、重启 Premiere、选择麦克风，并按 F8 试录一次。首次安装需要联网下载依赖和转写模型。
+Save your work, restart Premiere when asked, choose a microphone and record one test note with F8. The first installation needs a network connection for dependencies and the transcription model.
 
-### 手动安装
+### Manual install
 
-在解压目录运行 PowerShell：
+In the unzipped folder, run PowerShell:
 
 ```powershell
-# 查看安装计划
+# Show the installation plan
 .\install.ps1
-# 安装并下载默认转写模型
+# Install and download the default transcription model
 .\install.ps1 -Apply -DownloadModel
 ```
 
-已有模型缓存时可省略 `-DownloadModel`。安装后重启 Premiere，打开 **窗口 → 扩展 → Cuthere · 剪这儿**，等待录音助手与剪辑连接就绪。部分 Premiere 版本将菜单显示为“扩展（旧版）”。
+An existing model cache makes `-DownloadModel` optional. After installing, restart Premiere and open **Window → Extensions → Cuthere · 剪这儿**; older builds list it under *Extensions (Legacy)*. Wait until the recording helper and the edit connection are ready.
 
-安装器使用当前用户的独立 Python 环境，并备份已有安装。当前版本以未签名的 CEP 扩展提供，安装时会启用相应的开发扩展加载设置。[卸载与恢复](docs/TROUBLESHOOTING.md#卸载与恢复)
+The installer uses a per-user Python environment and backs up any previous installation. This version is an unsigned CEP extension, so installation enables the matching development-extension setting for the current user. See [uninstall and restore](docs/en/TROUBLESHOOTING.md#uninstall-and-restore-the-previous-panel).
 
-## 使用
+### macOS (experimental)
 
-1. 打开已保存的 Premiere 工程，并打开 Cuthere 面板。
-2. 播放或停在需要修改的位置，按住 **F8** 说出意见，松开保存。
-3. 回听并校对文字，继续记录其他意见。
-4. 点 **发送本批意见**，在工具目录生成交接说明：
+The candidate source package unpacks to a folder containing `install.sh`:
+
+```bash
+unzip cuthere-1.1.0-alpha.3-macos-source.zip -d cuthere-1.1.0-alpha.3-macos-source
+cd cuthere-1.1.0-alpha.3-macos-source
+
+./install.sh --check-only   # Python 3.11, FFmpeg, CEP folder, disk, host scope
+./install.sh                # DEFAULT: prints the plan, writes nothing
+./install.sh --apply        # install for the current user
+```
+
+This candidate is scoped to **Apple silicon (arm64) Macs running macOS 14 or later**. The pinned runtime cannot be installed on an Intel Mac, so the installer refuses an unsupported CPU or OS version before changing anything. See [docs/MACOS.md](docs/MACOS.md) for permissions, Function-key conflicts and troubleshooting.
+
+Recording needs macOS **Microphone** permission whichever way a take is started: the F8/F9 key or the panel's own Start/Stop buttons. Hold-to-talk also needs the key-monitoring permission macOS asks for — **Accessibility**, and on some systems **Input Monitoring**. Without key monitoring the panel buttons still record; without microphone permission nothing records. Cuthere cannot grant these permissions; grant the ones the system prompt or the panel's Connection diagnostics asks for.
+
+## Use
+
+1. Open a saved Premiere project and the Cuthere panel.
+2. Play or park the playhead where something needs changing, hold **F8**, say the note, release.
+3. Listen back and proof-read the text, then record more notes.
+4. Press **Send this batch** to write the handoff files, then run:
 
    ```powershell
    .\f8.ps1 handoff --project-root 'D:\Projects\Example'
    ```
 
-5. 把命令返回的 `AGENT_HANDOFF.md` 路径交给本地智能体，告诉它：**“意见提完了，请按这批意见修改，生成新版本并核对结果。”**
+5. Give the printed `AGENT_HANDOFF.md` path to a local agent and say: **"The notes are done. Apply this batch, produce a new version and verify the result."**
 
-`--project-root` 为当前 `.prproj` 所在文件夹。智能体先列出修改计划，再处理意见。剪辑时请保持 Cuthere 面板打开。
+`--project-root` is the folder that contains the `.prproj` you were reviewing. The agent lists its plan first and then processes the notes. Keep the Cuthere panel open while it works.
 
-“发送本批意见”会生成本地意见包；接下来需要在智能体中发出修改指令。录音和转写默认在本机处理，交给智能体后的数据处理方式取决于所选产品与模型。
+Sending a batch writes local files; it does not start an agent by itself. Recording and transcription run on this machine by default. Once a batch is handed to an agent, how its data is processed depends on the agent, model and tools you chose.
 
-## 支持范围
+## Supported scope
 
-- **已测试流程**：Windows、Premiere Pro 25.6.4、Python 3.11、Codex 桌面应用；覆盖录音、自动转写、意见交接、剪辑写回、结果核对与恢复。
-- **内置固定命令**：25 fps 普通序列中，最长 10 秒的明确区间删除。
-- **复杂意见**：由智能体检查相关音视频、制定方案并调用工具处理，完成后需要审片核对。
-- **其他智能体**：提供通用文件与命令行交接方式；WorkBuddy 等产品尚未完成相同流程测试。见[兼容说明](docs/AGENT_COMPATIBILITY.md)。
+- **Tested workflow**: Windows, Premiere Pro 25.6.4, Python 3.11 and the Codex desktop app; recording, automatic transcription, note handoff, edit write-back, read-back and rollback.
+- **Built-in fixed command**: one explicit range of at most 10 seconds on a 25 fps ordinary sequence.
+- **Complex notes**: the agent inspects the relevant picture and sound, writes a plan and calls tools; the result still needs editorial review.
+- **Other agents**: a documented file and CLI contract exists; products such as WorkBuddy have not completed the same end-to-end test. See [compatibility](docs/en/AGENT_COMPATIBILITY.md).
 
-语音转写可能有误，请先校对。其他帧率、复杂效果、嵌套、多机位及变速工程需要单独验证。完整测试范围见[测试记录](docs/RELEASE_STATUS.md)。
+Transcription can make mistakes, so proof-read the text first. Other frame rates, complex effects, nested sequences, multicam and speed-changed projects need separate verification. The full test scope is in [the test record](docs/en/RELEASE_STATUS.md). Planned work for 2.0 covers reusable shot analysis, material retrieval and better cross-shot planning and verification. See [the changelog](CHANGELOG.md).
 
-后续版本计划完善镜头分析、素材检索与跨镜头剪辑规划，见[更新记录](CHANGELOG.md)。
+## Help and contributing
 
-## 帮助与贡献
+- [Installation and runtime troubleshooting](docs/en/TROUBLESHOOTING.md)
+- [Agent workflow](docs/en/AGENT_WORKFLOW.md)
+- [Development and tests](docs/en/DEVELOPMENT.md)
+- [Report an issue](https://github.com/ceidei/cuthere/issues)
 
-- [安装与运行排查](docs/TROUBLESHOOTING.md)
-- [智能体工作流](docs/AGENT_WORKFLOW.md)
-- [开发与测试](docs/DEVELOPMENT.md)
-- [反馈问题](https://github.com/ceidei/cuthere/issues)
+Include the software versions, reproduction steps and expected versus actual results. Remove personal paths, client information and keys before sharing logs.
 
-反馈时请附软件版本、复现步骤、预期与实际结果。分享日志前请移除个人路径、客户信息和密钥。
+## Licence
 
-## 许可
-
-[MIT](LICENSE)。Premiere、智能体产品及第三方依赖分别遵循各自条款。本项目为独立第三方扩展。详见[许可证与隐私说明](docs/LICENSING_AND_PRIVACY.md)和[第三方组件](THIRD_PARTY_NOTICES.md)。
+[MIT](LICENSE). Premiere, agent products and third-party dependencies keep their own terms. This is an independent third-party extension. See [licensing and privacy](docs/en/LICENSING_AND_PRIVACY.md) and [third-party notices](THIRD_PARTY_NOTICES.md).

@@ -1,0 +1,10 @@
+# Optional macOS key backend: global press-and-hold F8/F9 through a
+# listen-only Quartz event tap. install.sh installs these when the index has
+# wheels for this Python/macOS; if that fails, the panel still records through
+# its own buttons and reports the backend as unavailable in status.json.
+#
+# PyObjC is MIT-licensed (see THIRD_PARTY_NOTICES.md). The version is pinned so
+# an install is reproducible; it is not bundled in the source package.
+PyObjC-Core==11.1 ; sys_platform == "darwin"
+PyObjC-Framework-Cocoa==11.1 ; sys_platform == "darwin"
+PyObjC-Framework-Quartz==11.1 ; sys_platform == "darwin"

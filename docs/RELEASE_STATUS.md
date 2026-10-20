@@ -1,6 +1,6 @@
 # 测试与兼容范围
 
-当前稳定版本：**1.0.1（Windows）**。测试日期：2026-10-20。
+当前发布版本：**1.0.1（Windows）**。候选版本：**1.1.0-alpha.3（跨平台源码，macOS 实验性）**。测试日期：2026-10-20。
 
 ## 测试环境
 
@@ -29,7 +29,25 @@
 
 完整录音与剪辑测试使用 1.0.0；1.0.1 验证了界面、安装与连接，未重新执行完整录音剪辑测试。结构化结果见 [VALIDATION.json](../VALIDATION.json)。
 
-自动化检查覆盖 37 项 Python 测试、6 项 Node 测试、桥接宿主契约及 6 类安装与恢复文件系统测试。运行方式见[开发与测试](DEVELOPMENT.md)。
+自动化检查覆盖 Python 测试、Node 面板/桥接测试、桥接宿主契约，以及安装与恢复文件系统测试；运行方式见[开发与测试](DEVELOPMENT.md)。
+
+## 1.1.0-alpha.3 候选
+
+本候选使源码可在 macOS 安装，并补齐英文文档。macOS 仍为**实验性**：以下只有自动化证据，没有任何 macOS 真机验收，也不声称已运行 macOS CI。alpha.3 的修订不改变下列证据：修正两次安装后沙箱恢复检查的预期对象，在 Git 中把 shell 入口记录为可执行并固定为 LF 换行，并更正 README 中的权限与产品说明。
+
+| 证据 | Windows | macOS |
+|---|---|---|
+| 源码可在本平台解释器导入 | 是（既有测试） | 仅自动化：独立解释器模拟 Darwin 的导入检查；没有真实 Mac 解释器运行记录 |
+| 安装/暂存/回滚逻辑 | PowerShell 测试套件 | 沙箱 HOME 与假解释器/venv 上的 Python 测试 |
+| 面板/桥接路径逻辑 | Node.js 测试 | 注入 darwin 平台对象的 Node.js 测试 |
+| 运行依赖与 PyObjC 导入 | 1.0.1 运行环境 | 未执行：工作流已配置在真实 Darwin 上安装并导入，但需由维护者运行 |
+| 真实 Premiere、真实麦克风、真实功能键 | 1.0.1 验收（本候选之前） | **未执行** |
+| 真实代理交接 | 1.0 验收（Codex） | 未执行 |
+| macOS CI 工作流 | 不适用 | `.github/workflows/macos.yml` 已配置，**未执行，也不声称通过** |
+
+macOS 候选的运行范围是 Apple silicon 且 macOS 14 或更新版本：官方 wheel 元数据中，`onnxruntime==1.31.0` 只提供 macOS 14+ arm64 轮子，没有 Intel Mac 可用的 macOS x86_64 轮子，因此安装器会拒绝其他主机。
+
+macOS 在[真机验收清单](MACOS.md#acceptance-checklist-for-a-real-mac)完成并记录到本文之前保持实验性。Windows 1.0.1 仍是稳定参考版本；本候选要替换它之前必须在 Windows 上复验。
 
 ## 已知限制
 

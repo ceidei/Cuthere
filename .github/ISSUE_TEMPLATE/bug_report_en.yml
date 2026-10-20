@@ -1,0 +1,43 @@
+name: Bug report (English)
+description: Installation, recording, transcription, handoff or editing problem
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please remove user names, private paths, client information, media and credentials before attaching anything.
+        A short, redacted receipt or diagnostic report is much more useful than screenshots of the timeline.
+  - type: input
+    id: platform
+    attributes:
+      label: Platform and versions
+      description: OS (Windows version or macOS version and chip), Premiere Pro version, Cuthere version, Python version, and the local agent you used.
+      placeholder: macOS 14 · Premiere 25.6.4 · Cuthere 1.1.0-alpha.1 · Python 3.11.9 · Codex
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where does it fail?
+      options:
+        - Installation / uninstall
+        - Panel does not load or is blank
+        - Hold-to-record key (F8/F9) or microphone
+        - Transcription
+        - Sending the batch / handing off to an agent
+        - Edit plan, publish, read-back or rollback
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps, expected result, actual result
+      description: What you did, what you expected, and what happened instead. Mention whether you used a test project.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Redacted evidence
+      description: Doctor report, install log, bridge receipt or panel diagnostics. Remove names, paths and client data first. Do not upload original media or project files.
