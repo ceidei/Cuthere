@@ -29,3 +29,16 @@ button:focus-visible, select:focus-visible, textarea:focus-visible, summary:focu
 meter::-webkit-meter-bar { background: #1d2023; border: 0; border-radius: 6px; }
 meter::-webkit-meter-optimum-value { background: #55b889; border-radius: 6px; }
 @media (prefers-reduced-motion: reduce) { .record-state.recording { animation: none; } }
+
+/* Recording shortcut recorder: one authoritative value, shared with the helper
+   and with `cuthere shortcut ...`. */
+.shortcut-row { display: flex; align-items: center; gap: 7px; margin-top: 8px; flex-wrap: wrap; }
+.shortcut-caption { color: #aeb6bf; font-size: 11px; }
+.shortcut-display {
+  min-width: 74px; padding: 5px 9px; border: 1px solid #4b7a60; border-radius: 4px;
+  background: #16241c; color: #b7f1ce; font: 600 12px Consolas, monospace; white-space: nowrap;
+}
+.shortcut-display.capturing { border-color: #c9a227; background: #33280f; color: #ffe0a3; }
+.shortcut-display.error { border-color: #a8574f; background: #351d1b; color: #ffc2b8; }
+.shortcut-row button { padding: 5px 9px; font-size: 12px; }
+.ptt-card .hint.subtle-line { padding-top: 5px; }

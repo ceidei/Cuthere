@@ -2,13 +2,14 @@
 
 **在 Premiere 里说出修改意见，让智能体接着剪。**
 
-按住 F8 说话，松开后自动保存录音、转写和时间线位置。提完一批意见，交给本地 Codex 等智能体，结合工程与音视频内容生成新的剪辑版本。
+按住录音快捷键说话，松开后自动保存录音、转写和时间线位置。提完一批意见，交给本地 Codex 等智能体，结合工程与音视频内容生成新的剪辑版本。
 
-当前版本：**1.1.0-alpha.4**——Windows 1.0.1 为发布路径，macOS 为实验性候选。macOS 候选只有自动化检查，**没有**在真实 Mac 上配合 Premiere、麦克风和 F8 运行过。[下载安装包](https://github.com/ceidei/cuthere/releases/latest) · [测试与兼容范围](docs/RELEASE_STATUS.md) · [English README](README.md)
+当前版本：**1.1.0-alpha.6**——Windows 1.0.1 为发布路径，macOS 为实验性候选。本候选的自动化检查仅在本机 Windows 开发环境运行，尚未有对应的 CI 运行，也**没有**在真实 Mac 上配合 Premiere、麦克风和真实按键运行过。[下载安装包](https://github.com/ceidei/cuthere/releases/latest) · [测试与兼容范围](docs/RELEASE_STATUS.md) · [English README](README.md)
 
 ## 功能
 
-- **边看边提意见**：F8/F9 按住录音、松开保存，关联播放头、所选片段或时间区间。
+- **边看边提意见**：按住录音、松开保存，关联播放头、所选片段或时间区间。
+- **自己的录音键**：Windows 默认 **F8**，macOS 默认 **右 Option**；也可换成其他支持的功能键、字母、数字或组合。面板里能改，本地智能体也能用 `cuthere shortcut set ...` 改，两者共用同一份设置。
 - **自动转写**：在本机将语音转成文字，支持回听和修订。
 - **批量交给智能体**：保留每条意见的录音、文字和位置，方便统一处理。
 - **按意见改片**：智能体结合工程、相关音视频和上下文制定修改方案，调用编辑工具生成新版本。
@@ -34,7 +35,7 @@
 
 > 请阅读 README.md，帮我安装 Cuthere，准备转写模型，并检查录音、转写和 Premiere 连接。使用独立测试工程验证，保留现有工程和插件备份。
 
-按提示保存当前工作、重启 Premiere、选择麦克风，并按 F8 试录一次。首次安装需要联网下载依赖和转写模型。
+按提示保存当前工作、重启 Premiere、选择麦克风，并用默认快捷键（Windows 为 F8）试录一次。首次安装需要联网下载依赖和转写模型。
 
 ### 手动安装
 
@@ -56,8 +57,8 @@
 候选源码包解压后，在包含 `install.sh` 的目录运行：
 
 ```bash
-unzip cuthere-1.1.0-alpha.4-macos-source.zip -d cuthere-1.1.0-alpha.4-macos-source
-cd cuthere-1.1.0-alpha.4-macos-source
+unzip cuthere-1.1.0-alpha.6-macos-source.zip -d cuthere-1.1.0-alpha.6-macos-source
+cd cuthere-1.1.0-alpha.6-macos-source
 
 ./install.sh --check-only   # 检查 Python 3.11、FFmpeg、CEP 目录、磁盘与主机范围
 ./install.sh                # 默认：只打印计划，不写盘
@@ -66,12 +67,14 @@ cd cuthere-1.1.0-alpha.4-macos-source
 
 本候选仅面向 **Apple silicon（arm64）且系统为 macOS 14 或更新版本** 的 Mac。锁定的运行依赖无法安装到 Intel Mac，因此安装器会在写入任何文件之前拒绝不支持的 CPU 或系统版本。权限、功能键冲突与排查见 [docs/MACOS.md](docs/MACOS.md)。
 
-录音无论用 F8/F9 还是面板自己的“开始/停止”按钮，都需要 macOS 的**麦克风**权限。按住说话还需要系统为按键监听要求的权限——通常是**辅助功能**，部分系统还会要求**输入监控**。缺少按键监听权限时，面板按钮仍可录音；缺少麦克风权限时则无法录音。Cuthere 不能代替用户授权，请按系统提示或面板“连接诊断”中请求的权限授予。
+录音无论用录音快捷键还是面板自己的“开始/停止”按钮，都需要 macOS 的**麦克风**权限。按住说话还需要系统为按键监听要求的权限——通常是**辅助功能**，部分系统还会要求**输入监控**。缺少按键监听权限时，面板按钮仍可录音；缺少麦克风权限时则无法录音。Cuthere 不能代替用户授权，请按系统提示或面板“连接诊断”中请求的权限授予。
+
+macOS 默认为**右 Option**（面板显示“右 Option”），F8/F9 仍可用，旧的 F9 选择会被沿用一次。macOS 的按键监听只观察、不拦截，因此 Premiere 或系统已占用的键仍会照常执行原动作，请选一个空闲的键。支持范围、左右 Option 的区别，以及“单独修饰键”的唯一限制见 [docs/MACOS.md](docs/MACOS.md)。
 
 ## 使用
 
 1. 打开已保存的 Premiere 工程，并打开 Cuthere 面板。
-2. 播放或停在需要修改的位置，按住 **F8** 说出意见，松开保存。
+2. 播放或停在需要修改的位置，按住录音快捷键（Windows 默认 F8，macOS 默认右 Option）说出意见，松开保存。
 3. 回听并校对文字，继续记录其他意见。
 4. 点 **发送本批意见**，在工具目录生成交接说明：
 
@@ -80,6 +83,16 @@ cd cuthere-1.1.0-alpha.4-macos-source
    ```
 
 5. 把命令返回的 `AGENT_HANDOFF.md` 路径交给本地智能体，告诉它：**“意见提完了，请按这批意见修改，生成新版本并核对结果。”**
+
+也可以自己改键，或让智能体代改：
+
+```powershell
+cuthere shortcut show                  # 当前生效的按键、来源与诊断
+cuthere shortcut set "Ctrl+Shift+K"    # 与打开的面板共用同一份设置
+cuthere shortcut reset                 # 恢复 F8 / 右 Option
+```
+
+真实按键和麦克风仍需本机手动按一次确认；命令成功只证明设置已保存并被读回。
 
 `--project-root` 为当前 `.prproj` 所在文件夹。智能体先列出修改计划，再处理意见。剪辑时请保持 Cuthere 面板打开。
 

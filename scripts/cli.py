@@ -8,7 +8,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 COMMANDS = {'handoff': 'agent_handoff', 'edit': 'podcast_edit', 'roundtrip': 'premiere_roundtrip',
             'read-batch': 'read_review_batch', 'decision-template': 'prepare_review_edit_plan',
-            'doctor': 'review_doctor', 'transcribe': 'transcribe_review_batch', 'select-sequence':'select_sequence'}
+            'doctor': 'review_doctor', 'transcribe': 'transcribe_review_batch', 'select-sequence':'select_sequence',
+            'shortcut': 'shortcut'}
 
 
 def product_version() -> str:

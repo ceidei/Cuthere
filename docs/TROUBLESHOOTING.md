@@ -6,11 +6,15 @@ macOS 专属问题（功能键与媒体键、辅助功能/输入监控/麦克风
 
 保存工程，退出并重新打开 Premiere，再打开 **窗口 → 扩展 → Cuthere · 剪这儿**。检查面板中的录音助手与剪辑连接是否就绪。如果是脚本或自动化启动器拉起的 Premiere，先退出再用平时的桌面方式启动一次。
 
-## 按 F8 没有录到声音
+## 按住录音快捷键没有录到声音
 
 保持 Premiere 在前台，确认面板显示助手已连接，并检查所选麦克风与输入电平。先尝试系统默认输入，再选择具体麦克风和输入通道。
 
-意见录音保存在工程文件夹的 `work/premiere-review/` 中。回听录音，区分麦克风问题与转写问题。助手每次看到按键都会写入 `ptt_key_diagnostic.json`；如果该文件始终不出现，说明按键没有到达助手：可能被其他应用占用、面板未就绪，或 macOS 上功能键未按到（见 [macOS 安装说明](MACOS.md)）。
+执行 `cuthere shortcut show`，把其中的当前快捷键和你实际按下的键对照：Windows 默认 F8、macOS 默认右 Option，不支持的值会被明确拒绝而不是悄悄替换。意见录音保存在工程文件夹的 `work/premiere-review/` 中。回听录音，区分麦克风问题与转写问题。助手每次在就绪状态看到按键都会写入 `ptt_key_diagnostic.json`；如果该文件始终不出现，说明按键没有到达助手：可能被其他应用占用、面板未就绪，或 macOS 上功能键未按到（见 [macOS 安装说明](MACOS.md)）。
+
+Windows 上如果诊断文件显示 `state: registration_failed`，说明 `RegisterHotKey` 没能拿到该组合（已被其他程序占用或被系统保留）。换一个组合，或关闭占用它的程序；此时 Cuthere 不会在未注册的快捷键上开始录音。Windows 不接受 F12 及以 F12 为主键的组合，请用 F1–F11 或其他按键。
+
+`cuthere shortcut show` 的 `live.helper_running` 只有在助手心跳不超过 10 秒、且 `shortcut_config` 与平台都匹配时才为 true；退出助手后留下的旧 `status.json` 会显示为过期，不能证明设置已应用。写入成功看 `saved`，是否被助手应用看 `applied`/`pending`。配置文件被截断或手改坏时，会从 `shortcut.last-good.json` 恢复最近一次成功生效的值；`status: recovered` 表示发生了这次恢复。
 
 ## 有录音，没有转写
 

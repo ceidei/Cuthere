@@ -2,7 +2,9 @@
 
 本工具负责意见保存、核验和Premiere执行。你负责理解用户意图、选择必要证据、制定编辑决定并报告实际结果。先确认用户给出的工具根目录和当前 `.prproj` 所在工程目录；已有授权可延续，不重复询问已明确的修改。
 
-macOS 上安装后的入口是 `~/Library/Application Support/Cuthere/bin/cuthere`，子命令与下面的 `python scripts/cli.py ...` 相同；全局 F8/F9 还需系统辅助功能权限，面板按钮录音不依赖它。英文说明见 `docs/en/AGENT_WORKFLOW.md`。
+macOS 上安装后的入口是 `~/Library/Application Support/Cuthere/bin/cuthere`，子命令与下面的 `python scripts/cli.py ...` 相同；全局录音快捷键还需系统辅助功能权限，面板按钮录音不依赖它。英文说明见 `docs/en/AGENT_WORKFLOW.md`。
+
+录音快捷键是用户自己的设置，不在批次文件里。需要查看或按用户要求调整时用 `python scripts/cli.py shortcut show`；`set`、`reset`、`test-state`、`grammar` 与面板共用同一份 `<runtime>/shortcut.json`，改动会被运行中的录音助手在下次轮询读取。不要手改面板存储、猜测 localStorage 键名或改动系统键盘设置。命令行的 `configured` 是文件里的值，`effective`/`applied` 只有在助手心跳不超过 10 秒且配置路径、平台都匹配时才来自运行中的助手；写入成功只证明已保存，`applied` 为 false 时不要向用户宣称已生效。真实按键与麦克风仍需用户在本机确认。配置文件损坏时读取 `shortcut.last-good.json` 中最近一次成功生效的值，而不是上一次设置或 F8 默认值。
 
 ## 读取与定位
 

@@ -4,6 +4,8 @@ This is the English counterpart of [../AGENT_WORKFLOW.md](../AGENT_WORKFLOW.md).
 
 Cuthere stores, verifies and executes in Premiere. **You** understand the editor's intent, choose the evidence you need, make the edit decision, and report what actually happened. Confirm the tool location and the folder that holds the current `.prproj`; existing authority carries over, so do not re-ask about changes the editor already approved.
 
+The recording shortcut is the editor's own setting, not part of a batch. To inspect it, or to change it when the editor asks you to, run `cuthere shortcut show` (or `python scripts/cli.py shortcut show`); `set`, `reset`, `test-state` and `grammar` read and write the same `<runtime>/shortcut.json` that the open panel and the recording helper use. Edit that file only through these commands — never through the panel's storage, a guessed `localStorage` key or a system keyboard setting. `configured` is the value in the file; `effective` and `applied` come from a live helper only when its heartbeat is at most 10 seconds old and its configuration path and platform match. A successful write is saved, not necessarily applied: do not tell the editor a value is in force while `applied` is false. A damaged file recovers the last value that was successfully in force from `shortcut.last-good.json`, not the previous setting and not an F8 default. The physical key and the microphone remain the editor's own hardware test.
+
 ## Read and locate
 
 From the tool folder:

@@ -1,7 +1,7 @@
 {
   "product": "Cuthere",
-  "version": "1.1.0-alpha.4",
-  "test_date": "2026-10-20",
+  "version": "1.1.0-alpha.6",
+  "test_date": "2026-10-21",
   "environment": {
     "os": "Windows 11 Pro",
     "build": "22621",
@@ -73,8 +73,10 @@
     }
   },
   "automated_checks": {
-    "python_tests_passed": 203,
-    "node_tests_passed": 14,
+    "python_tests_passed": 298,
+    "python_tests_skipped": 1,
+    "python_subtests_passed": 54,
+    "node_tests_passed": 25,
     "bridge_host_contract": "PASS",
     "powershell_filesystem_cases_passed": 6,
     "powershell_syntax": "PASS"
@@ -89,18 +91,139 @@
   },
   "full_recording_and_edit_test_repeated_for_1_0_1": false,
   "candidate_1_1_0_alpha_4": {
-    "status": "AUTOMATED_CHECKS_ONLY",
-    "windows_regression": "Automated checks on the development host; no new physical Premiere or microphone acceptance.",
+    "status": "AUTOMATED_CHECKS_PASSED_WINDOWS_AND_MACOS_CI; MACOS_HARDWARE_NOT_ACCEPTED",
+    "windows_regression": "Automated checks on the development host and the recorded Windows CI run; no new physical Premiere or microphone acceptance.",
     "macos_hardware_acceptance": "NOT_PERFORMED",
-    "macos_ci_run": "NOT_PASSING",
-    "macos_scope": "Apple silicon (arm64) on macOS 14.0 or later; Intel Macs and older macOS are refused before any change because onnxruntime==1.31.0 has no macOS x86_64 wheel and its arm64 wheel requires macOS 14.",
+    "macos_ci_run": "PASSED",
+    "candidate_commit": "7bb307a2d88e6dfa0cfc0353f776d7af30080fd8",
+    "repository": "https://github.com/ceidei/cuthere",
+    "ci_runs": {
+      "windows": {
+        "workflow": ".github/workflows/windows.yml",
+        "runner": "windows-latest",
+        "conclusion": "success",
+        "url": "https://github.com/ceidei/cuthere/actions/runs/39449546296",
+        "python_tests_passed": 204,
+        "node_tests_passed": 15,
+        "covers": [
+          "Python test suite",
+          "Node panel and bridge tests",
+          "PowerShell syntax and the install/restore filesystem cases",
+          "Windows release allowlist dry run",
+          "update_manifests.py --check"
+        ]
+      },
+      "macos": {
+        "workflow": ".github/workflows/macos.yml",
+        "runner": "macos-15 arm64",
+        "conclusion": "success",
+        "url": "https://github.com/ceidei/cuthere/actions/runs/39449546127",
+        "python_tests_passed": 204,
+        "node_tests_passed": 15,
+        "shell_checks_passed": 48,
+        "shell_checks_failed": 0,
+        "native_dependency_installs_and_imports": "PASS",
+        "installer_check_only": "PASS",
+        "sandboxed_install_upgrade_restore_purge": "PASS",
+        "covers": [
+          "Python test suite on a real Darwin interpreter with the arm64 and macOS 14 assertions",
+          "Node panel and bridge tests",
+          "Installation and import of requirements-macos.txt and the optional PyObjC set",
+          "install_macos.py --check-only",
+          "bash -n on install.sh, uninstall.sh and tests/shell/installer_tests.sh",
+          "Sandboxed install, upgrade, restore and purge transactions",
+          "macOS release allowlist dry run",
+          "update_manifests.py --check"
+        ]
+      }
+    },
+    "macos_scope": "Apple silicon (arm64) on macOS 14.0 or later; Intel Macs and older macOS are refused before any change because onnxruntime==1.31.0 has no macOS x86_64 wheel and its arm64 wheel requires macOS 14. No Intel Mac support is claimed.",
     "evidence": "docs/en/RELEASE_STATUS.md",
     "notes": [
-      "The 1.0.0/1.0.1 records above are historical and unchanged.",
+      "The 1.0.0/1.0.1 records above are historical and unchanged; the physical Windows acceptance stays separate from these automated runs.",
+      "The runs belong to the functional candidate commit. The later documentation-only finalization changes documentation and manifests only, and its affected documentation and manifest checks were re-run locally.",
+      "Neither run loads the panel in Premiere, presses a physical F8/F9, answers a TCC permission prompt, captures from a microphone or edits a project.",
       "The macOS distribution is experimental until docs/MACOS.md#acceptance-checklist-for-a-real-mac is completed on real hardware.",
       "No permission, physical F8/F9 press, microphone capture, CEP load or agent handoff on macOS is claimed.",
-      "alpha.4 repairs the failures the published alpha.3 GitHub runs reported: equivalent project-path spellings, a checkout-independent FILE_MANIFEST.json, and independent CI checks that still run after a Python failure. No passing CI run is claimed.",
-      "One symlink-alias test is skipped on this Windows host because it lacks the directory-symlink privilege; the same identity rule is still covered there by a parent-segment alias test."
+      "The suite collects 204 Python tests; one symlink-alias test skips on the Windows development host (203 passed, 1 skipped) and runs in CI."
+    ]
+  },
+  "candidate_1_1_0_alpha_5": {
+    "status": "AUTOMATED_CHECKS_PASSED_ON_THE_DEVELOPMENT_HOST; MACOS_HARDWARE_NOT_ACCEPTED; CI_PENDING",
+    "windows_regression": "Automated checks on the development host only; no new physical Premiere or microphone acceptance.",
+    "macos_hardware_acceptance": "NOT_PERFORMED",
+    "macos_ci_run": "NOT_RUN_FOR_THIS_CANDIDATE",
+    "windows_ci_run": "NOT_RUN_FOR_THIS_CANDIDATE",
+    "product_change": "The recording shortcut becomes one authoritative per-user setting (Right Option on macOS, F8 on Windows by default) shared by the panel, the capture helper and the shortcut CLI.",
+    "local_checks": {
+      "python_suite": "273 passed, 1 skipped (the directory-symlink alias test that needs the Windows symlink privilege), 50 subtests passed",
+      "node_panel_and_bridge_tests": 25,
+      "node_lifecycle_driver": "PASS",
+      "source_manifest": "FILE_MANIFEST.json regenerated and verified with scripts/update_manifests.py --check",
+      "macos_package": "built from the committed tree into output/ci-reviewed with an archive manifest and SHA-256",
+      "shortcut_behaviour": [
+        "the Python parser and the panel JavaScript read the same shared test vectors",
+        "fresh defaults (Right Option on macOS, F8 on Windows) and one-time migration of an explicit old F9",
+        "persistence, reset, restore-previous, dry-run preview and rejected unsupported input",
+        "a malformed or half-written file keeps the last good value instead of silently reverting to F8",
+        "macOS left-vs-right Option, flagsChanged release, both key/modifier release orders, short taps and auto-repeat",
+        "a modifier-only take cancelled when the modifier becomes part of a chord, with no note created and the audio kept",
+        "a chord pressed in another application neither starts nor cancels a take",
+        "the Windows F8 virtual key code and chord registration",
+        "a panel or CLI change picked up by the running helper without a restart, and no mid-take key swap",
+        "the panel-recorded value and the CLI converge on one stored value"
+      ]
+    },
+    "not_performed": [
+      "A physical Right Option or function key press on a real Mac",
+      "A real Windows/Premiere chord and its interception behaviour",
+      "Microphone capture, TCC prompts, CEP loading in Premiere and an agent edit on macOS",
+      "A GitHub Actions run for this candidate's commit"
+    ],
+    "evidence": "docs/en/RELEASE_STATUS.md",
+    "notes": [
+      "The alpha.4 block above records the published candidate commit 7bb307a2 and its two passing platform runs; it is the code before the configurable recording shortcut and is kept as history.",
+      "No CI conclusion is claimed for this candidate. The reviewing step runs the real Windows and macOS workflows and publishes their links.",
+      "No automated result here stands in for real hardware acceptance; scripts and synthetic key events cannot prove a physical key, permission prompt or microphone capture."
+    ]
+  },
+  "candidate_1_1_0_alpha_6": {
+    "status": "AUTOMATED_CHECKS_PASSED_ON_THE_DEVELOPMENT_HOST; MACOS_HARDWARE_NOT_ACCEPTED; CI_PENDING",
+    "windows_regression": "Automated checks on the development host only; no new physical Premiere or microphone acceptance.",
+    "macos_hardware_acceptance": "NOT_PERFORMED",
+    "macos_ci_run": "NOT_RUN_FOR_THIS_CANDIDATE",
+    "windows_ci_run": "NOT_RUN_FOR_THIS_CANDIDATE",
+    "product_change": "Repairs only: Darwin unknown-key/chord and side-specific modifier release, Windows registration failure and F12 reservation, live-readback freshness/identity, last-good corruption recovery, and committed-blob packaging. The shortcut feature and its supported scope are unchanged.",
+    "local_checks": {
+      "python_suite": "298 passed, 1 skipped (the directory-symlink alias test that needs the Windows symlink privilege), 54 subtests passed",
+      "node_panel_and_bridge_tests": 25,
+      "node_lifecycle_driver": "PASS",
+      "source_manifest": "FILE_MANIFEST.json regenerated and verified with scripts/update_manifests.py --check",
+      "macos_package": "alpha.6 built from a fresh committed-blob export into output/ci-reviewed with an archive manifest and SHA-256; every ZIP entry compared with git cat-file",
+      "shortcut_behaviour": [
+        "a punctuation key, Escape or any other non-modifier key cancels a modifier-only take and blocks a later modifier press while held",
+        "a modifier-only binding does not start while another modifier or key is already held, in either press order",
+        "releasing one side of a modifier while the opposite side keeps the family flag set is resolved with CGEventSourceKeyState",
+        "a refused Windows RegisterHotKey is reported as registration_failed, starts no take and stops/saves an active take",
+        "the explicit observe-only diagnostic mode is reported separately from registration",
+        "Windows refuses F12 and F12-based chords; macOS still binds F12",
+        "stale, malformed, foreign-config and foreign-platform status files are not treated as a live helper",
+        "configured, effective, applied and pending are distinct, and a pre-write status is not post-write acknowledgment",
+        "the last-good backup holds the latest successfully effective value after multiple updates and recovers it in warm and fresh readers",
+        "the alpha.6 archive entries match committed blobs byte for byte"
+      ]
+    },
+    "not_performed": [
+      "A physical Right Option or function key press on a real Mac",
+      "A real Windows/Premiere chord, its interception and a real hotkey collision",
+      "Microphone capture, TCC prompts, CEP loading in Premiere and an agent edit on macOS",
+      "A GitHub Actions run for this candidate's commit"
+    ],
+    "evidence": "docs/en/RELEASE_STATUS.md",
+    "notes": [
+      "The alpha.5 block above records the feature candidate and is kept as history; alpha.6 is a repair round on the same feature.",
+      "No CI conclusion is claimed for this candidate. The reviewing step runs the real Windows and macOS workflows and publishes their links.",
+      "No automated result here stands in for real hardware acceptance; scripts and synthetic key events cannot prove a physical key, permission prompt or microphone capture."
     ]
   },
   "not_tested": [

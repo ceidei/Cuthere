@@ -1,12 +1,17 @@
 """Choose the global hold-to-record backend for the running platform.
 
-The backends expose the same three methods, so ``PushToTalk`` has one code path:
+The backends expose the same methods, so ``PushToTalk`` has one code path:
 
 * ``poll(key)`` -> ``(down, pressed_since_poll, hotkey_message)``
 * ``frontmost()`` -> bool (is Premiere the active application?)
 * ``close()``
 
-Windows: ``ctypes`` user32 hotkey + asynchronous key state (unchanged behaviour).
+A binding is the canonical string produced by
+``services.review_capture.shortcut`` (``F8``, ``Control+Shift+K``, ``RightAlt``),
+not a free-form key name: every value is parsed and validated before it reaches
+a backend, and an unsupported value is reported instead of being rewritten to F8.
+
+Windows: ``ctypes`` user32 hotkey + asynchronous key state.
 macOS: optional PyObjC Quartz listen-only event tap; unavailable when PyObjC is
 not installed, and reported as such instead of silently doing nothing.
 
@@ -19,7 +24,12 @@ from __future__ import annotations
 import sys
 from typing import Any
 
-SUPPORTED_KEYS = ("F8", "F9", "F10", "F11")
+from .. import shortcut
+
+#: Base keys a hold-to-record binding may use. ``ptt`` no longer rewrites an
+#: unknown value to F8; this tuple is what "supported" means for diagnostics.
+SUPPORTED_KEYS = shortcut.BASE_KEYS
+SUPPORTED_MODIFIERS = shortcut.MODIFIER_ORDER
 
 
 class BackendUnavailable(RuntimeError):
@@ -52,9 +62,13 @@ def capability(platform: str | None = None) -> dict[str, Any]:
     """Describe what hold-to-record can do here, without opening any tap."""
     platform = normalize_platform(platform)
     if platform == "win32":
-        return {"platform": platform, "backend": "windows-hotkey", "available": True, "reason": ""}
+        return {"platform": platform, "backend": "windows-hotkey", "available": True, "reason": "",
+                "shortcuts": shortcut.describe_support(platform)}
     if platform == "darwin":
         from .keymonitor_darwin import probe
 
-        return probe()
-    return {"platform": platform, "backend": None, "available": False, "reason": "unsupported platform"}
+        report = probe()
+        report["shortcuts"] = shortcut.describe_support(platform)
+        return report
+    return {"platform": platform, "backend": None, "available": False, "reason": "unsupported platform",
+            "shortcuts": shortcut.describe_support(platform)}

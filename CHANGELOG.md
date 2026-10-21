@@ -1,12 +1,36 @@
 # 更新记录
 
+## 1.1.0-alpha.6
+
+快捷键复核修复。macOS 仍为**实验性**：本版只有本机自动化检查，没有新的 CI 运行，也没有真实 Mac 上的 Premiere、麦克风、右 Option 或权限验收。
+
+- macOS 按键边缘：任何真实非修饰键（标点、Escape、不在可绑定语法内的按键）都会取消“只按修饰键”的录音，并被计入“已有按键按住”的判断；其他修饰键或按键已按住时，单独的修饰键不会开始录音。左右修饰键同时按住时，松开必需的一侧会按该侧的原生状态（`CGEventSourceKeyState`）判断，不再被聚合的 Option/Command 等标志误读成按下。
+- 重新进入 Premiere、事件监听被停用或状态可能过期后，修饰键状态会按原生按键状态重新核对；无法确认时不会凭聚合标志猜出一个录音。
+- Windows 热键注册失败不再被当作成功：组合被别的程序占用或被系统保留时，面板/命令行/诊断文件会明确报告 `registration_failed`，不会在未注册的快捷键上开始录音；正在进行的录音会停止并保留音频。显式的“仅观察”诊断模式单独标记，不宣称已注册。Windows 拒绝 F12 及以 F12 为主键的组合（Microsoft 保留给调试器），macOS 仍可绑定 F12。
+- 命令行实时读回：只有心跳在 10 秒内、且配置路径与平台都匹配的 `status.json` 才算运行中的助手。过期、损坏或属于其他运行目录的文件不会再显示成“助手正在运行”。输出区分 configured / effective / applied / pending：保存成功不等于已应用，写设置前生成的状态也不能当作写入后的确认。
+- `shortcut.last-good.json` 现在保存最近一次成功生效的值（例如 F10），而不是上一次设置（F9）；损坏或截断的当前文件在已加载和新建的读取器里都会恢复到最新有效值，并保留回滚历史，不会静默回到 F8。
+- 发布源码包在本轮从提交对象重新导出构建，逐项与 `git cat-file` 的提交字节核对；上一版 alpha.5 的包保持不变，本版为 alpha.6。
+
+## 1.1.0-alpha.5
+
+可自定义的录音快捷键。macOS 仍为**实验性**：自动化检查已在本机运行，但这一版尚未在真实 Mac 上配合 Premiere、麦克风和真实按键验收，也没有对应的 CI 运行记录。
+
+- 默认快捷键：macOS 为**右 Option**（与左 Option 区分），Windows 保留 **F8**。用户此前明确选择过的 F8/F9 会在没有新设置文件时沿用一次，之后不再覆盖较新的设置。
+- 面板：原来的 F8/F9 下拉框改为录制器——录制、可读预览、保存/取消（Esc）、恢复本机默认，并显示当前生效值与来源。录制期间不会开始录音，录音进行时不能改键。
+- 命令行：新增 `cuthere shortcut show|set|reset|restore-previous|test-state|grammar`，输出结构化 JSON，支持 `--dry-run` 预览与回滚，并报告后端、权限与生效状态。
+- 同一份设置：面板、录音助手和命令行都读写 `<runtime>/shortcut.json`（macOS 为 `~/Library/Application Support/Cuthere/shortcut.json`）。写入是原子的，损坏或被截断的文件会沿用 `shortcut.last-good.json` 中的上一次可用值，不会静默回到 F8。
+- 支持范围：`Control`/`Option`/`Shift`/`Command`（含左右写法）加一个主键（F1–F12、字母、数字、空格、Enter/Tab/Backspace、Insert/Delete/Home/End/PageUp/PageDown、方向键）；macOS 另支持单独一个左右修饰键。`Escape` 与 `Fn`/Globe 不提供绑定；Windows 无法区分左右修饰键，也不支持只按修饰键。不支持的值会被明确拒绝并给出原因。
+- macOS 事件：修饰键经 `flagsChanged` 的按键码识别左右两侧；主键或所需修饰键任一松开都会结束录音。单独修饰键无法在按下瞬间预知后续组合键：按住期间若按下其他按键，本次录音会取消、不生成意见但保留音频。监听只观察不拦截，已知的系统组合键只作提醒，最终以 Premiere 自己的键盘快捷键列表为准。
+- Windows：热键注册支持组合键并保留 F8 的 1.0 虚拟键码；松开所需修饰键同样结束录音。
+
 ## 1.1.0-alpha.4
 
-针对已发布 alpha.3 在 GitHub 运行器上实际暴露的失败所做的修复。macOS 仍为**实验性**：自动化检查通过，但尚未在真实 Mac 上配合 Premiere、麦克风和功能键验收；也不声称已有通过的 CI 运行。
+针对已发布 alpha.3 在 GitHub 运行器上实际暴露的失败所做的修复。macOS 仍为**实验性**：Windows 与 Apple silicon macOS 的自动化检查均已通过，但尚未在真实 Mac 上配合 Premiere、麦克风和功能键验收。
 
 - 工程路径身份：同一工程的不同写法（macOS 的 `/var` 与 `/private/var`、Windows 的 8.3 短名、`..` 或符号链接别名）按文件身份比较，不再被误判为另一个工程；真正不同的工程与序列变化仍会被拒绝。
 - 源码清单：`FILE_MANIFEST.json` 按内容判断文本并按 LF 归一化，`.gitignore`、`.gitattributes`、`LICENSE` 与 `.cjs` 测试驱动在全新检出时与清单一致；CI 只校验清单，不在测试时重新生成。
 - 持续集成：各平台的独立检查（Node、macOS 原生依赖导入、安装器 check-only 与 shell、打包与清单）在 Python 测试失败后仍会执行；没有任何检查使用 `continue-on-error`，失败仍会使整体工作流失败。
+- 文档与证据：测试与兼容说明记录了两个平台的运行链接、测试数量与各自覆盖范围，并保留真实 Mac 硬件验收尚未执行、仅支持 Apple silicon 与 macOS 14+ 的说明。本次只改文档与清单，未改动源码、工作流或安装器。
 
 ## 1.1.0-alpha.3
 

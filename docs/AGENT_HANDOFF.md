@@ -6,7 +6,7 @@ A Chinese version of the agent rules is in [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md
 
 ## 1. Roles
 
-**You (the editor, at the machine).** Keep Premiere in front, hold F8/F9, speak one precise note at a time, proof-read the transcript, then press **Send this batch** / **发送本批意见**. Notes are recorded against the playhead, the selected clips, or the in/out points.
+**You (the editor, at the machine).** Keep Premiere in front, hold the recording shortcut (F8 on Windows, Right Option on macOS by default), speak one precise note at a time, proof-read the transcript, then press **Send this batch** / **发送本批意见**. Notes are recorded against the playhead, the selected clips, or the in/out points.
 
 **The agent (Codex or another local agent).** Reads the batch, checks the current project, writes an edit decision table, produces a dry run, then — inside whatever authority the editor granted — publishes a new sequence and reads it back.
 

@@ -626,9 +626,10 @@ def install(options: Options, *, host: HostCommands | None = None,
                     "dependency installation failed; the previous panel is still in place "
                     f"(see {version_root / 'pip.log'})"
                 )
-            # PyObjC powers the optional global F8/F9 tap. A missing wheel, an
-            # old SDK or a blocked index must not make the panel uninstallable:
-            # the buttons still record and the backend reports "unavailable".
+            # PyObjC powers the optional global recording-shortcut tap. A missing
+            # wheel, an old SDK or a blocked index must not make the panel
+            # uninstallable: the buttons still record and the backend reports
+            # "unavailable".
             if OPTIONAL_REQUIREMENTS.is_file():
                 note("installing the optional PyObjC key backend")
                 completed = host.run_python([str(venv_python), "-m", "pip", "install", "--disable-pip-version-check",

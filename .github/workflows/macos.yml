@@ -41,7 +41,7 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           node tests/premiere_lifecycle.cjs
-          node --test tests/review_ptt_release.cjs tests/cep_adapter.cjs tests/single_panel.cjs tests/panel_platform.cjs
+          node --test tests/review_ptt_release.cjs tests/cep_adapter.cjs tests/single_panel.cjs tests/panel_platform.cjs tests/panel_shortcut.cjs
       - name: Install macOS runtime dependencies (no transcription model)
         id: runtime_deps
         if: ${{ !cancelled() }}

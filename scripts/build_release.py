@@ -64,6 +64,7 @@ COMMON_FILES = [
     "premiere_cep/review_capture_panel/css/review_panel.css",
     "premiere_cep/review_capture_panel/js/bridge.js",
     "premiere_cep/review_capture_panel/js/cep_adapter.js",
+    "premiere_cep/review_capture_panel/js/hotkey_binding.js",
     "premiere_cep/review_capture_panel/js/hostscript.jsx",
     "premiere_cep/review_capture_panel/js/project_lifecycle.jsx",
     "premiere_cep/review_capture_panel/js/review_host.jsx",
@@ -78,6 +79,8 @@ COMMON_FILES = [
     "tests/cep_adapter.cjs",
     "tests/single_panel.cjs",
     "tests/panel_platform.cjs",
+    "tests/panel_shortcut.cjs",
+    "tests/fixtures/shortcut_vectors.json",
     "scripts/build_release.py",
     "scripts/update_manifests.py",
 ]

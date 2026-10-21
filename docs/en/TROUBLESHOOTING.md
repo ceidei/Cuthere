@@ -6,11 +6,15 @@ macOS-specific items (Function keys, Accessibility/Input Monitoring/Microphone p
 
 Save your project, quit Premiere completely, reopen it and select **Window → Extensions → Cuthere · 剪这儿**. Check the recording-helper and edit-connection status in the panel. If Premiere was started by an automated launcher or by a script, close it and start it the way you normally do.
 
-## Holding F8 records nothing
+## Holding the recording shortcut records nothing
 
 Keep Premiere in front and confirm the panel shows the helper connected, then check the selected microphone and input level. Start with the system default input, then pick a specific microphone and channel if playback is silent.
 
-Notes and recordings live under `<project>/work/premiere-review/`. Listen to the WAV first to separate a microphone problem from a transcription problem. The helper writes `ptt_key_diagnostic.json` every time a press is seen; if the file never appears, the key never reached the helper (another application owns it, the panel is not ready, or — on macOS — the Function key is not being sent; see the [macOS guide](../MACOS.md)).
+Run `cuthere shortcut show` and compare the binding with the key you pressed: the default is F8 on Windows and Right Option on macOS, and an unsupported value is rejected rather than silently replaced. Notes and recordings live under `<project>/work/premiere-review/`. Listen to the WAV first to separate a microphone problem from a transcription problem. The helper writes `ptt_key_diagnostic.json` every time an armed press is seen; if the file never appears, the key never reached the helper (another application owns it, the panel is not ready, or — on macOS — the Function key is not being sent; see the [macOS guide](../MACOS.md)).
+
+On Windows, a diagnostic file showing `state: registration_failed` means `RegisterHotKey` could not take the combination (another application owns it or Windows reserves it). Choose another combination or close the application holding it; Cuthere will not start a take on a shortcut it did not register. Windows refuses F12 and chords whose base key is F12; use F1–F11 or another key.
+
+`live.helper_running` in `cuthere shortcut show` is true only while the helper's heartbeat is at most 10 seconds old and its `shortcut_config` and platform match the request. An old `status.json` left by an exited helper is reported as stale and cannot prove that a setting applied. `saved` means the file was written; `applied`/`pending` say whether a live helper has actually taken it. If `shortcut.json` is truncated or hand-edited into invalid JSON, Cuthere recovers the last value that was successfully in force from `shortcut.last-good.json`; `status: recovered` marks that recovery.
 
 ## There is a recording but no transcript
 

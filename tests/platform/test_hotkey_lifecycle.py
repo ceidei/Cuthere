@@ -525,8 +525,10 @@ class FakeTap:
 
 
 class FakeEvent:
-    def __init__(self, code) -> None:
+    def __init__(self, code, flags=0, repeat=False) -> None:
         self.code = code
+        self.flags = flags
+        self.repeat = repeat
 
 
 class FakeQuartz:
@@ -541,7 +543,9 @@ class FakeQuartz:
     kCGHeadInsertEventTap = 2
     kCGEventTapOptionListenOnly = 3
     kCGKeyboardEventKeycode = 9
+    kCGKeyboardEventAutorepeat = 8
     kCFRunLoopCommonModes = "common"
+    kCGEventSourceStateCombinedSessionState = 0
 
     @staticmethod
     def CGEventMaskBit(bit):
@@ -558,6 +562,25 @@ class FakeQuartz:
         self.create_calls = 0
         self.removed_sources = 0
         self.sources_added = 0
+        #: Physical side state, as CGEventSourceKeyState reports it. The
+        #: aggregate flags are derived from it so the fake behaves like macOS:
+        #: releasing one Option while the other stays down keeps the Alt flag.
+        self.physical_modifiers: dict[int, bool] = {}
+        self.native_state_reads = 0
+
+    def CGEventSourceKeyState(self, _state_id, code):
+        self.native_state_reads += 1
+        return 1 if self.physical_modifiers.get(int(code), False) else 0
+
+    def set_physical_modifier(self, code, down):
+        self.physical_modifiers[int(code)] = bool(down)
+
+    def modifier_flags(self):
+        flags = 0
+        for code, name in keymonitor_darwin.MODIFIER_NAMES.items():
+            if self.physical_modifiers.get(code, False):
+                flags |= keymonitor_darwin.MODIFIER_FLAGS[keymonitor_darwin.modifier_base(name)]
+        return flags
 
     def CGEventTapCreate(self, *_args, **_kwargs):
         self.create_calls += 1
@@ -592,12 +615,28 @@ class FakeQuartz:
     def CFRunLoopStop(self, _run_loop):
         self.run_gate.set()
 
-    def CGEventGetIntegerValueField(self, event, _field):
+    def CGEventGetIntegerValueField(self, event, field):
+        if field == self.kCGKeyboardEventAutorepeat:
+            return 1 if getattr(event, "repeat", False) else 0
         return event.code
 
-    def key_event(self, code, down):
+    def CGEventGetFlags(self, event):
+        return int(getattr(event, "flags", 0))
+
+    def key_event(self, code, down, *, flags=None, repeat=False):
+        if flags is None:
+            flags = self.modifier_flags()
         event_type = self.kCGEventKeyDown if down else self.kCGEventKeyUp
-        return self.callback(None, event_type, FakeEvent(code), None)
+        return self.callback(None, event_type, FakeEvent(code, flags=flags, repeat=repeat), None)
+
+    def modifier_event(self, code, down=None, *, flags=None):
+        """A flagsChanged edge with macOS semantics: the side changes, the
+        aggregate family flag is derived from all physically down sides."""
+        if down is not None:
+            self.set_physical_modifier(code, down)
+        if flags is None:
+            flags = self.modifier_flags()
+        return self.callback(None, self.kCGEventFlagsChanged, FakeEvent(code, flags=flags), None)
 
     def disable_event(self, event_type):
         return self.callback(None, event_type, None, None)
@@ -643,9 +682,10 @@ class DarwinTapLifecycleTests(unittest.TestCase):
     key events or grants a permission; see docs/MACOS.md.
     """
 
-    def start(self, quartz: FakeQuartz | None = None, *, timeout: float | None = None):
+    def start(self, quartz: FakeQuartz | None = None, *, timeout: float | None = None,
+              binding: str = "F8"):
         quartz = quartz or FakeQuartz()
-        backend = keymonitor_darwin.DarwinKeyMonitor("F8")
+        backend = keymonitor_darwin.DarwinKeyMonitor(binding)
         patches = [patch.object(keymonitor_darwin, "_quartz", return_value=quartz),
                    patch.object(keymonitor_darwin, "_appkit", return_value=FakeAppKit())]
         if timeout is not None:
@@ -755,6 +795,51 @@ class DarwinTapLifecycleTests(unittest.TestCase):
         self.assertTrue(wait_for(lambda: quartz.tap.invalidated == 1), "late tap must be released")
         self.assertIsNone(backend._tap)
         self.assertIsNone(backend._thread)
+
+    def test_native_side_state_resolves_a_release_while_the_other_side_is_down(self):
+        # macOS keeps the aggregate Alt flag set while either Option is down.
+        # Releasing Right Option with Left Option still held must be resolved
+        # from CGEventSourceKeyState, not from the flag.
+        backend, quartz = self.start(binding="RightAlt+K")
+        quartz.set_physical_modifier(0x3D, True)
+        quartz.modifier_event(0x3D)  # Right Option down
+        quartz.key_event(keymonitor_darwin.KEY_CODES["K"], True)
+        self.assertEqual(backend.poll("RightAlt+K"), (True, True, True))
+        quartz.set_physical_modifier(0x3A, True)  # Left Option down
+        quartz.modifier_event(0x3A)
+        quartz.set_physical_modifier(0x3D, False)  # Right Option released
+        quartz.modifier_event(0x3D)
+        self.assertEqual(backend.poll("RightAlt+K"), (False, False, False))
+        self.assertGreater(quartz.native_state_reads, 0,
+                           "the ambiguous release must use the native side query")
+
+    def test_rearm_reconciles_physical_modifier_state_before_accepting_an_edge(self):
+        backend, quartz = self.start(binding="RightAlt")
+        # While hold-to-record is disarmed the tap observes but does not track.
+        backend.set_armed(False)
+        quartz.set_physical_modifier(0x3D, True)  # Right Option is physically held
+        backend.set_armed(True)
+        self.assertTrue(backend.health()["modifier_state_known"])
+        self.assertEqual(backend.health()["modifiers_down"], ["RightAlt"])
+        # Its release is a release, not a spurious new take from the Alt flag.
+        quartz.set_physical_modifier(0x3D, False)
+        quartz.modifier_event(0x3D)
+        self.assertEqual(backend.poll("RightAlt"), (False, False, False))
+
+    def test_unknown_side_state_is_not_guessed_into_a_take(self):
+        backend, _quartz = self.start(binding="RightAlt")
+        backend.set_armed(False)
+        # No native query is available (a minimal legacy Quartz surface).
+        backend._quartz = object()
+        backend.set_armed(True)
+        self.assertFalse(backend.health()["modifier_state_known"])
+        backend.modifier_changed(0x3D, keymonitor_darwin.MODIFIER_FLAGS["Alt"])
+        self.assertEqual(backend.poll("RightAlt"), (False, False, False),
+                         "an unknown side state must not fabricate a press")
+        self.assertEqual(backend.health()["last_event"]["kind"], "modifier_unknown")
+        # The explicit test surface can establish the edge and then works.
+        backend.feed(0x3D, True)
+        self.assertEqual(backend.poll("RightAlt"), (True, True, True))
 
 
 if __name__ == "__main__":

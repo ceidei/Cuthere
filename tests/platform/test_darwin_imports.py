@@ -32,6 +32,7 @@ MODULES = [
     "services.platform_paths",
     "services.review_capture",
     "services.review_capture.audio",
+    "services.review_capture.shortcut",
     "services.review_capture.backends",
     "services.review_capture.backends.keymonitor",
     "services.review_capture.backends.panel_visibility",
@@ -47,6 +48,7 @@ MODULES = [
     "scripts.transcribe_review_batch",
     "scripts.transcribe_review_note",
     "scripts.review_doctor",
+    "scripts.shortcut",
     "scripts.cli",
     "scripts.install_macos",
 ]

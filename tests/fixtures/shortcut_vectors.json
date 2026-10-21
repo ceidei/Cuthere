@@ -1,0 +1,277 @@
+{
+  "cases": [
+    {
+      "input": "F8",
+      "darwin": {
+        "binding": "F8",
+        "display": "F8"
+      },
+      "win32": {
+        "binding": "F8",
+        "display": "F8"
+      }
+    },
+    {
+      "input": "F9",
+      "darwin": {
+        "binding": "F9",
+        "display": "F9"
+      },
+      "win32": {
+        "binding": "F9",
+        "display": "F9"
+      }
+    },
+    {
+      "input": "F10",
+      "darwin": {
+        "binding": "F10",
+        "display": "F10"
+      },
+      "win32": {
+        "binding": "F10",
+        "display": "F10"
+      }
+    },
+    {
+      "input": "F11",
+      "darwin": {
+        "binding": "F11",
+        "display": "F11"
+      },
+      "win32": {
+        "binding": "F11",
+        "display": "F11"
+      }
+    },
+    {
+      "input": "F12",
+      "darwin": {
+        "binding": "F12",
+        "display": "F12"
+      },
+      "win32": {
+        "code": "reserved_windows_f12"
+      }
+    },
+    {
+      "input": "Control+F12",
+      "darwin": {
+        "binding": "Control+F12",
+        "display": "⌃ + F12"
+      },
+      "win32": {
+        "code": "reserved_windows_f12"
+      }
+    },
+    {
+      "input": "RightOption",
+      "darwin": {
+        "binding": "RightAlt",
+        "display": "右 Option"
+      },
+      "win32": {
+        "code": "modifier_only_unsupported"
+      }
+    },
+    {
+      "input": "Right Option",
+      "darwin": {
+        "binding": "RightAlt",
+        "display": "右 Option"
+      },
+      "win32": {
+        "code": "modifier_only_unsupported"
+      }
+    },
+    {
+      "input": "left option",
+      "darwin": {
+        "binding": "LeftAlt",
+        "display": "左 Option"
+      },
+      "win32": {
+        "code": "modifier_only_unsupported"
+      }
+    },
+    {
+      "input": "ropt",
+      "darwin": {
+        "binding": "RightAlt",
+        "display": "右 Option"
+      },
+      "win32": {
+        "code": "modifier_only_unsupported"
+      }
+    },
+    {
+      "input": "Control+Shift+K",
+      "darwin": {
+        "binding": "Control+Shift+K",
+        "display": "⌃⇧ + K"
+      },
+      "win32": {
+        "binding": "Control+Shift+K",
+        "display": "Ctrl+Shift+K"
+      }
+    },
+    {
+      "input": "shift+ctrl+k",
+      "darwin": {
+        "binding": "Control+Shift+K",
+        "display": "⌃⇧ + K"
+      },
+      "win32": {
+        "binding": "Control+Shift+K",
+        "display": "Ctrl+Shift+K"
+      }
+    },
+    {
+      "input": "Cmd+Option+1",
+      "darwin": {
+        "binding": "Alt+Meta+1",
+        "display": "⌥⌘ + 1"
+      },
+      "win32": {
+        "binding": "Alt+Meta+1",
+        "display": "Alt+Win+1"
+      }
+    },
+    {
+      "input": "Option+RightShift+K",
+      "darwin": {
+        "binding": "Alt+RightShift+K",
+        "display": "⌥⇧ + K (右键)"
+      },
+      "win32": {
+        "code": "sided_modifier_unsupported"
+      }
+    },
+    {
+      "input": "RightShift+K",
+      "darwin": {
+        "binding": "RightShift+K",
+        "display": "⇧ + K (右键)"
+      },
+      "win32": {
+        "code": "sided_modifier_unsupported"
+      }
+    },
+    {
+      "input": "Control+Space",
+      "darwin": {
+        "binding": "Control+Space",
+        "display": "⌃ + Space"
+      },
+      "win32": {
+        "binding": "Control+Space",
+        "display": "Ctrl+Space"
+      }
+    },
+    {
+      "input": "Space",
+      "darwin": {
+        "binding": "Space",
+        "display": "Space"
+      },
+      "win32": {
+        "binding": "Space",
+        "display": "Space"
+      }
+    },
+    {
+      "input": "A",
+      "darwin": {
+        "binding": "A",
+        "display": "A"
+      },
+      "win32": {
+        "binding": "A",
+        "display": "A"
+      }
+    },
+    {
+      "input": "1",
+      "darwin": {
+        "binding": "1",
+        "display": "1"
+      },
+      "win32": {
+        "binding": "1",
+        "display": "1"
+      }
+    },
+    {
+      "input": "Ctrl+Shift",
+      "darwin": {
+        "code": "ambiguous_modifier_only"
+      },
+      "win32": {
+        "code": "ambiguous_modifier_only"
+      }
+    },
+    {
+      "input": "Escape",
+      "darwin": {
+        "code": "reserved_escape"
+      },
+      "win32": {
+        "code": "reserved_escape"
+      }
+    },
+    {
+      "input": "Fn",
+      "darwin": {
+        "code": "reserved_fn"
+      },
+      "win32": {
+        "code": "reserved_fn"
+      }
+    },
+    {
+      "input": "F13",
+      "darwin": {
+        "code": "unsupported_token"
+      },
+      "win32": {
+        "code": "unsupported_token"
+      }
+    },
+    {
+      "input": "Control+Ctrl+K",
+      "darwin": {
+        "code": "duplicate_modifier"
+      },
+      "win32": {
+        "code": "duplicate_modifier"
+      }
+    },
+    {
+      "input": "A+B",
+      "darwin": {
+        "code": "multiple_keys"
+      },
+      "win32": {
+        "code": "multiple_keys"
+      }
+    },
+    {
+      "input": "",
+      "darwin": {
+        "code": "empty"
+      },
+      "win32": {
+        "code": "empty"
+      }
+    },
+    {
+      "input": "Ctrl+",
+      "darwin": {
+        "code": "empty_token"
+      },
+      "win32": {
+        "code": "empty_token"
+      }
+    }
+  ]
+}

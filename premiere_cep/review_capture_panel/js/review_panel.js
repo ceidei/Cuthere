@@ -28,7 +28,16 @@
     var busy = false;
     var pttCurrent = null;
     var pttHandledId = "";
-    var pttHotkey = "F8";
+    // The recording shortcut is not held in this file: it lives in the one
+    // per-user shortcut.json that the helper and `cuthere shortcut ...` use too.
+    // `shortcutState` is the last readback, `shortcutRecorder` is the modal
+    // recorder below the key label.
+    var shortcutState = null;
+    var shortcutRecorder = null;
+    var shortcutMigrationsTried = false;
+    var shortcutReadTicks = 0;
+    var bindingApi = (typeof CuthereShortcut !== "undefined") ? CuthereShortcut : null;
+    var LEGACY_HOTKEY_KEY = "autovideoedit.review.ptt.hotkey";
 
     function $(id) { return document.getElementById(id); }
     // CEP runs the same panel on Windows and macOS. Everything platform-specific
@@ -214,11 +223,235 @@
     function writePttArm() {
         if (!ipcRoot) { return; }
         var config = {
-            at: new Date().toISOString(), hotkey: pttHotkey,
-            enabled: !busy && !active && !!projectPath && !!selectedDevice() && workerIsOnline(),
+            at: new Date().toISOString(), hotkey: shortcutBinding(), shortcut: shortcutBinding(),
+            // A take may never start while the recorder is capturing keys, even
+            // if the captured key is the configured one.
+            enabled: !busy && !active && !shortcutRecorder && !!projectPath && !!selectedDevice() && workerIsOnline(),
             project_path: projectPath, session_id: sessionId, device: selectedDevice()
         };
         resultError(window.cep.fs.writeFile(join(ipcRoot, "ptt_arm.json"), JSON.stringify(config)), "更新快捷键设置失败");
+    }
+    // -- recording shortcut ---------------------------------------------
+    // The panel never keeps its own copy of the shortcut: it reads the value the
+    // helper publishes from the single per-user shortcut.json, and writes new
+    // values through the helper so validation and the atomic file update happen
+    // in one place. That is what makes a `cuthere shortcut set` visible here and
+    // stops a stale browser preference from overwriting it.
+    function shortcuts() {
+        if (!bindingApi) { throw new Error("快捷键模块未加载；请重新打开面板。"); }
+        return bindingApi;
+    }
+    function shortcutPlatform() { return isMac() ? "darwin" : "win32"; }
+    function shortcutPath() { return appRoot ? join(appRoot, "shortcut.json") : ""; }
+    function shortcutBinding() {
+        if (shortcutState && shortcutState.binding) { return shortcutState.binding; }
+        try { return shortcuts().defaultBinding(shortcutPlatform()).binding; }
+        catch (e) { return isMac() ? "RightAlt" : "F8"; }
+    }
+    function shortcutLabel(binding) {
+        var value = binding || shortcutBinding();
+        if (shortcutState && shortcutState.display && value === shortcutState.binding) { return shortcutState.display; }
+        try { return shortcuts().parse(value, shortcutPlatform()).display; }
+        catch (e) { return value; }
+    }
+    function adoptShortcut(payload) {
+        if (!payload || !payload.binding) { return false; }
+        var previous = shortcutState ? shortcutState.binding : "";
+        shortcutState = {
+            binding: String(payload.binding),
+            display: String(payload.display || payload.binding),
+            source: String(payload.source || ""),
+            status: String(payload.status || "ok"),
+            pending: !!payload.pending,
+            pending_binding: payload.pending_binding || null,
+            active_binding: payload.active_binding || null,
+            applied: payload.applied || null,
+            configured: payload.configured || null,
+            registration: payload.registration || null,
+            problems: payload.problems || [],
+            updated_at: payload.updated_at || "",
+            config_path: payload.config_path || shortcutPath()
+        };
+        if (!shortcutRecorder || previous !== shortcutState.binding) { renderShortcut(); }
+        return true;
+    }
+    function readShortcutFile() {
+        if (!appRoot) { return null; }
+        return readJson(shortcutPath());
+    }
+    function refreshShortcut() {
+        var status = workerIsOnline() ? readJson(statusPath()) : null;
+        if (status && status.shortcut && status.shortcut.binding) { adoptShortcut(status.shortcut); return; }
+        var record = readShortcutFile();
+        if (!record || !record.binding) { return; }
+        try {
+            var parsed = shortcuts().parse(record.binding, shortcutPlatform());
+            adoptShortcut({ binding: parsed.binding, display: parsed.display, source: record.source || "",
+                status: "ok", config_path: shortcutPath(), updated_at: record.updated_at || "" });
+        } catch (e) { /* an invalid file is reported by the helper and the CLI */ }
+    }
+    function migrateLegacyShortcut() {
+        if (shortcutMigrationsTried || !ipcRoot) { return; }
+        shortcutMigrationsTried = true;
+        if (readShortcutFile()) { return; }
+        var legacy = "";
+        try { legacy = String(window.localStorage.getItem(LEGACY_HOTKEY_KEY) || "").trim(); }
+        catch (e) { legacy = ""; }
+        if (!legacy) { return; }
+        sendRequest("shortcut_migrate", { legacy_value: legacy }, function (error, result) {
+            if (error || !result || !result.migrated) { return; }
+            adoptShortcut(result);
+            showNotice("已沿用你之前选择的录音快捷键 " + shortcutLabel() + "。", "good");
+        }, 8000);
+    }
+    function shortcutHintText() {
+        if (shortcutRecorder) {
+            if (shortcutRecorder.error) { return shortcutRecorder.error + "（Esc 取消）"; }
+            if (shortcutRecorder.preview) {
+                var notes = [];
+                try { notes = shortcuts().conflicts(shortcutRecorder.preview, shortcutPlatform()); } catch (e) { notes = []; }
+                return "将设为 " + shortcutRecorder.preview.display + "，点“保存”生效。" +
+                    (notes.length ? " " + notes[0] : "") + "（Esc 取消）";
+            }
+            return "请按下想要的按键或组合（功能键 " + (isMac() ? "F1–F12" : "F1–F11") +
+                "、字母、数字，可加修饰键）；单独按修饰键只支持 macOS 的左右键。Esc 取消。";
+        }
+        if (!shortcutState) { return "快捷键设置读取中；面板、录音助手和命令行共用同一份设置。"; }
+        var parts = [];
+        var sourceText = { panel: "面板设置", cli: "命令行设置", migration: "沿用旧设置", reset: "已恢复默认", default: "本机默认" }[shortcutState.source];
+        parts.push((sourceText || "当前设置") + "：" + shortcutState.display);
+        if (shortcutState.status === "recovered") { parts.push("保存的设置文件已损坏，正在沿用上一次可用的值；请重新设置。"); }
+        if (shortcutState.problems && shortcutState.problems.length) {
+            parts.push("快捷键设置文件有问题：" + String(shortcutState.problems[0]));
+        }
+        var registration = shortcutState.registration;
+        if (registration && registration.mode === "failed") {
+            parts.push("快捷键注册失败（组合可能已被其他程序占用或被系统保留），正在重试；此时不会开始录音。");
+        } else if (registration && registration.mode === "observe_only") {
+            parts.push("当前是仅观察诊断模式：快捷键未注册给 Cuthere。");
+        }
+        if (shortcutState.pending && shortcutState.pending_binding) {
+            parts.push("正在录音，结束后切换到 " + shortcutLabel(shortcutState.pending_binding) + "。");
+        }
+        if (shortcutState.source === "default" && isMac()) { parts.push("Mac 默认为右 Option。"); }
+        return parts.join(" ");
+    }
+    function renderShortcut() {
+        var display = shortcutRecorder && shortcutRecorder.preview ? shortcutRecorder.preview.display : shortcutLabel();
+        var label = $("ptt-key-label"); if (label) { label.textContent = display; }
+        var inline = $("ptt-key-label-inline"); if (inline) { inline.textContent = display; }
+        var output = $("ptt-shortcut-display");
+        if (output) {
+            output.textContent = shortcutRecorder ? display : shortcutLabel();
+            output.className = "shortcut-display" +
+                (shortcutRecorder ? " capturing" : (shortcutState && shortcutState.status === "recovered" ? " error" : ""));
+        }
+        var hint = $("ptt-shortcut-hint");
+        if (hint) { hint.textContent = shortcutHintText(); }
+        updateShortcutControls();
+    }
+    function updateShortcutControls() {
+        var capturing = !!shortcutRecorder;
+        var taking = !!active || !!pttCurrent;
+        var online = workerIsOnline();
+        var save = $("ptt-save"), cancel = $("ptt-cancel"), record = $("ptt-record"), reset = $("ptt-reset");
+        if (save) { save.hidden = !capturing; save.disabled = !capturing || !shortcutRecorder.preview || taking; }
+        if (cancel) { cancel.hidden = !capturing; }
+        if (record) { record.hidden = capturing; record.disabled = capturing || taking || busy || !online; }
+        if (reset) { reset.disabled = capturing || taking || busy || !online; }
+    }
+    function onShortcutListeners(add) {
+        var method = add ? "addEventListener" : "removeEventListener";
+        if (typeof document === "undefined" || typeof document[method] !== "function") { return; }
+        if (add) {
+            document.addEventListener("keydown", onShortcutKeyDown, true);
+            document.addEventListener("keyup", onShortcutKeyUp, true);
+        } else {
+            document.removeEventListener("keydown", onShortcutKeyDown, true);
+            document.removeEventListener("keyup", onShortcutKeyUp, true);
+        }
+    }
+    function beginShortcutCapture() {
+        if (shortcutRecorder || busy) { return; }
+        if (!workerIsOnline()) { showNotice("录音助手未连接，暂时不能修改快捷键。", "error"); return; }
+        shortcutRecorder = { preview: null, error: "", modifiers: [], sawModifier: false, sawKey: false };
+        onShortcutListeners(true);
+        try { writePttArm(); } catch (e) { /* the dialog must open even if the arm file cannot be refreshed */ }
+        renderShortcut();
+        showNotice("按下想要的按键或组合；Esc 取消。", "good");
+    }
+    function endShortcutCapture() {
+        if (!shortcutRecorder) { return; }
+        onShortcutListeners(false);
+        shortcutRecorder = null;
+        try { writePttArm(); } catch (e) { /* */ }
+        renderShortcut();
+    }
+    function cancelShortcut() {
+        if (!shortcutRecorder) { return; }
+        endShortcutCapture();
+        showNotice("已取消修改录音快捷键；当前仍为 " + shortcutLabel() + "。");
+    }
+    function onShortcutKeyDown(event) {
+        if (!shortcutRecorder) { return; }
+        if (event.preventDefault) { event.preventDefault(); }
+        if (event.stopPropagation) { event.stopPropagation(); }
+        var api = shortcuts();
+        if (api.isEscape(event)) { cancelShortcut(); return; }
+        var token = api.modifierToken(event);
+        if (token) {
+            if (shortcutRecorder.modifiers.indexOf(token) < 0) { shortcutRecorder.modifiers.push(token); }
+            shortcutRecorder.sawModifier = true;
+            shortcutRecorder.preview = null;
+            shortcutRecorder.error = "";
+            renderShortcut();
+            return;
+        }
+        var chord = api.chordFromEvent(event, shortcutPlatform());
+        shortcutRecorder.sawKey = true;
+        if (!chord.ok) { shortcutRecorder.preview = null; shortcutRecorder.error = chord.message || "这个按键不能作为录音快捷键。"; }
+        else { shortcutRecorder.preview = chord.preview; shortcutRecorder.error = ""; }
+        renderShortcut();
+    }
+    function onShortcutKeyUp(event) {
+        if (!shortcutRecorder) { return; }
+        var api = shortcuts();
+        var token = api.modifierToken(event);
+        if (!token) { return; }
+        var index = shortcutRecorder.modifiers.indexOf(token);
+        if (index >= 0) { shortcutRecorder.modifiers.splice(index, 1); }
+        if (shortcutRecorder.sawKey || shortcutRecorder.modifiers.length || !shortcutRecorder.sawModifier) { return; }
+        // Only a modifier was pressed and released: that is a modifier-only
+        // binding (macOS Right Option by default, and the macOS default now).
+        try { shortcutRecorder.preview = api.parse(token, shortcutPlatform()); shortcutRecorder.error = ""; }
+        catch (error) { shortcutRecorder.preview = null; shortcutRecorder.error = error.message; }
+        renderShortcut();
+    }
+    function saveShortcut() {
+        if (!shortcutRecorder || !shortcutRecorder.preview) { return; }
+        var binding = shortcutRecorder.preview.binding;
+        var taking = !!active || !!pttCurrent;
+        sendRequest("shortcut_set", { binding: binding }, function (error, result) {
+            if (error) {
+                var detail = result && result.code ? result.code + "：" + (result.message || error.message) : error.message;
+                showNotice("快捷键未保存：" + detail, "error");
+                if (shortcutRecorder) { shortcutRecorder.error = detail; renderShortcut(); }
+                return;
+            }
+            adoptShortcut(result);
+            endShortcutCapture();
+            showNotice(result && result.pending ?
+                "已保存 " + result.display + "；正在录音，本次录音结束后生效。" :
+                "录音快捷键已设为 " + result.display + "。", "good");
+        }, 12000);
+    }
+    function resetShortcut() {
+        if (shortcutRecorder || busy) { return; }
+        sendRequest("shortcut_reset", {}, function (error, result) {
+            if (error) { showNotice("没有恢复默认快捷键：" + error.message, "error"); return; }
+            adoptShortcut(result);
+            showNotice("已恢复本机默认快捷键 " + result.display + "。", "good");
+        }, 12000);
     }
     function writePanelDiagnostics() {
         try {
@@ -264,6 +497,8 @@
             if (!heartbeatTimer) { heartbeatTimer = setInterval(heartbeat, 1000); }
             setWorkerStatus("助手已连接", "online");
             refreshDevices();
+            refreshShortcut();
+            migrateLegacyShortcut();
         });
         statusTimer = setInterval(updateWorkerStatus, 100);
     }
@@ -273,6 +508,10 @@
         var status = readJson(statusPath());
         var currentPtt = readJson(join(join(ipcRoot, "ptt"), "current.json"));
         if (currentPtt && currentPtt.state === "idle") { currentPtt = null; }
+        // The shortcut file is authoritative and may change at any time (panel,
+        // CLI or a hand edit); poll it a few times a second, not every tick.
+        shortcutReadTicks += 1;
+        if (shortcutReadTicks % 5 === 1) { refreshShortcut(); }
         handlePushToTalk(currentPtt || (status && status.push_to_talk));
         renderKeyBackend(status);
         if (!status || !status.active_recording) {
@@ -302,13 +541,20 @@
     }
     // Hold-to-record needs a platform key backend. When it is missing (for
     // example macOS without Accessibility/Input Monitoring approval) say so
-    // visibly instead of silently ignoring F8; the buttons still work.
+    // visibly instead of silently ignoring the key; the buttons still work.
+    // The key name is the effective binding, never a hard-coded F8.
     function renderKeyBackend(status) {
         var element = $("key-backend");
         if (!element) { return; }
         var capability = (status && status.push_to_talk_capability) || {};
         var diagnostic = readJson(join(ipcRoot, "ptt_key_diagnostic.json")) || {};
         var armed = !!(status && status.push_to_talk_armed);
+        var key = shortcutLabel();
+        var lastPress = "";
+        if (diagnostic.at) {
+            lastPress = " · 最近一次按下 " + (diagnostic.hotkey || key) + "（" +
+                String(diagnostic.at).replace("T", " ").replace(/\+\d\d:\d\d$/, "") + "）";
+        }
         var text, kind;
         if (capability.available === false) {
             text = "按住录音不可用：" + (capability.reason || "当前平台没有可用的按键后端") + "（可先用下方按钮录音）";
@@ -317,25 +563,36 @@
             text = "按住录音未就绪：" + (diagnostic.reason || "系统权限不足") + "（可先用下方按钮录音）";
             kind = "warning";
         } else if (armed) {
-            text = "按住录音已就绪 · " + (capability.backend || "平台后端");
+            text = "按住录音已就绪 · " + key + " · " + (capability.backend || "平台后端") + lastPress;
             kind = "good";
         } else {
-            text = "按住录音待命：Premiere 在前台且选好麦克风后生效 · " + (capability.backend || "平台后端");
+            text = "按住录音待命 · " + key + "：Premiere 在前台且选好麦克风后生效 · " +
+                (capability.backend || "平台后端") + lastPress;
             kind = "";
         }
         element.textContent = text;
         element.className = "bridge-path" + (kind ? " " + kind : "");
     }
+    // A capture carries the binding it actually started with, so a note recorded
+    // before a shortcut change still shows the key the editor really pressed.
+    function captureKeyLabel(capture) {
+        if (capture && capture.binding && capture.binding.display) { return capture.binding.display; }
+        if (capture && capture.hotkey) { return shortcutLabel(String(capture.hotkey)); }
+        return shortcutLabel();
+    }
     function handlePushToTalk(capture) {
         if (!capture || !capture.id || capture.id === pttHandledId) { return; }
+        var keyLabel = captureKeyLabel(capture);
         if (!pttCurrent || pttCurrent.id !== capture.id) {
             pttCurrent = {
                 id: capture.id, snapshot: null, snapshotPending: true, complete: false,
                 releasePreviewRequested: false, releasePreview: null, releasePending: false,
-                releaseReady: false, endSnapshot: null, sent: false, needsManualRetry: false
+                releaseReady: false, endSnapshot: null, sent: false, needsManualRetry: false,
+                keyLabel: keyLabel
             };
-            $("record-state").textContent = "已按下 " + capture.hotkey + "，正在记录并读取时间线…";
+            $("record-state").textContent = "已按下 " + keyLabel + "，正在记录并读取时间线…";
             $("record-state").className = "record-state recording";
+            updateShortcutControls();
             getSnapshot(function (error, snapshot) {
                 if (!pttCurrent || pttCurrent.id !== capture.id) { return; }
                 pttCurrent.snapshotPending = false;
@@ -347,7 +604,7 @@
                     pttCurrent.snapshot = snapshot;
                     setProject(snapshot);
                     if (!pttCurrent.complete) {
-                        $("record-state").textContent = "● 起点已记录；可拖到终点，停稳后松开 " + capture.hotkey;
+                        $("record-state").textContent = "● 起点已记录；可拖到终点，停稳后松开 " + keyLabel;
                         $("record-state").className = "record-state recording";
                     }
                     captureReleaseSnapshotIfNeeded(pttCurrent);
@@ -356,8 +613,8 @@
         }
         if (capture.state === "preparing" || capture.state === "recording") {
             $("record-state").textContent = pttCurrent.snapshot ?
-                "● 起点已记录；可拖到终点，停稳后松开 " + capture.hotkey :
-                "● 按住 " + capture.hotkey + " 说话，正在记录起点…";
+                "● 起点已记录；可拖到终点，停稳后松开 " + keyLabel :
+                "● 按住 " + keyLabel + " 说话，正在记录起点…";
             $("record-state").className = "record-state recording";
         } else if (capture.state === "complete") {
             if (!pttCurrent.complete) {
@@ -366,6 +623,18 @@
                 $("record-state").className = "record-state";
             }
             captureReleasePreview(pttCurrent);
+        } else if (capture.state === "cancelled") {
+            // A modifier-only shortcut became part of another chord: the take is
+            // discarded on purpose and must not become a review note.
+            pttHandledId = capture.id;
+            pttCurrent = null;
+            $("record-state").textContent = "本次快捷录音已取消";
+            $("record-state").className = "record-state";
+            showNotice((capture.error || "按住修饰键时按下了其他按键，本次录音已取消。") +
+                " 音频保留在 " + capture.capture_dir, "");
+            sendRequest("ptt_ack", { capture_id: capture.id }, function (error) {
+                if (error) { showNotice("录音状态未清除：" + error.message, "error"); }
+            });
         } else if (capture.state === "failed" || capture.state === "interrupted") {
             pttHandledId = capture.id;
             $("record-state").textContent = "快捷录音未完成";
@@ -403,7 +672,8 @@
             if (!pttCurrent || pttCurrent.id !== current.id) { return; }
             if (error || !value || !value.position || !value.position.ticks) {
                 current.pointFallback = true;
-                current.releaseWarning = "松开 F8 时没有读到终点；录音按起点存为单点意见，请核对范围";
+                current.releaseWarning = "松开 " + (current.keyLabel || shortcutLabel()) +
+                    " 时没有读到终点；录音按起点存为单点意见，请核对范围";
                 captureReleaseSnapshotIfNeeded(current);
                 return;
             }
@@ -443,7 +713,8 @@
             current.releasePending = false;
             if (error || !snapshot || String(snapshot.location.ticks) !== String(last.position.ticks)) {
                 current.endSnapshot = releasePreviewSnapshot(first, last);
-                current.releaseWarning = "终点采用松开 F8 时的播放头位置；请复核区间边界";
+                current.releaseWarning = "终点采用松开 " + (current.keyLabel || shortcutLabel()) +
+                    " 时的播放头位置；请复核区间边界";
             } else {
                 current.endSnapshot = snapshot;
             }
@@ -472,7 +743,7 @@
             $("retry-ptt").hidden = true;
             $("record-state").textContent = result.mode === "range" ? "录音和区间已保存" : "录音和当前位置已保存";
             $("record-state").className = "record-state saved";
-            showNotice(current.releaseWarning || ("意见已保存，可以继续按住 " + pttHotkey + " 录下一条。"), current.releaseWarning ? "error" : "good");
+            showNotice(current.releaseWarning || ("意见已保存，可以继续按住 " + shortcutLabel() + " 录下一条。"), current.releaseWarning ? "error" : "good");
             refreshNotes(); refreshControls();
         }, 25000);
     }
@@ -631,6 +902,7 @@
                 "先停在范围起点。录音后可拖动播放头；结束时只记录起点和确认的终点。" :
                 "暂停并停在问题处。录音开始后，这个位置会固定。";
         }
+        updateShortcutControls();
     }
     function selectedMode() {
         var selected = document.querySelector('input[name="mode"]:checked');
@@ -1041,14 +1313,13 @@
         extensionRoot = cs.getSystemPath(SystemPath.EXTENSION);
         $("start-recording").addEventListener("click", startRecording);
         $("retry-ptt").addEventListener("click", retryPtt);
-        pttHotkey = window.localStorage.getItem("autovideoedit.review.ptt.hotkey") === "F9" ? "F9" : "F8";
-        $("ptt-key").value = pttHotkey; $("ptt-key-label").textContent = pttHotkey;
-        $("ptt-key").addEventListener("change", function () {
-            pttHotkey = $("ptt-key").value === "F9" ? "F9" : "F8";
-            $("ptt-key-label").textContent = pttHotkey;
-            window.localStorage.setItem("autovideoedit.review.ptt.hotkey", pttHotkey);
-            try { writePttArm(); } catch (e) { showNotice(e.message, "error"); }
-        });
+        // The recorder replaces the old F8/F9 <select>. It shows the value the
+        // helper publishes and never keeps a private copy of its own.
+        renderShortcut();
+        $("ptt-record").addEventListener("click", beginShortcutCapture);
+        $("ptt-save").addEventListener("click", saveShortcut);
+        $("ptt-cancel").addEventListener("click", cancelShortcut);
+        $("ptt-reset").addEventListener("click", resetShortcut);
         $("lock-end").addEventListener("click", lockEnd);
         $("reselect-end").addEventListener("click", reselectEnd);
         $("stop-recording").addEventListener("click", stopRecording);
@@ -1073,6 +1344,9 @@
             if (previewTimer) { clearInterval(previewTimer); }
             if (statusTimer) { clearInterval(statusTimer); }
             if (transcriptionTimer) { clearInterval(transcriptionTimer); }
+            // A recorder left armed while the panel closes must not keep a
+            // global key listener around.
+            if (shortcutRecorder) { onShortcutListeners(false); shortcutRecorder = null; }
         });
         $("record-state").textContent = "准备就绪";
     }

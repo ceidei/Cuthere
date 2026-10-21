@@ -23,8 +23,17 @@
     </section>
     <section class="ptt-card" aria-label="按住说话">
       <div class="section-label">快捷录音</div>
-      <div class="ptt-key-row"><strong>按住 <span id="ptt-key-label">F8</span> 说话，松开自动保存</strong><label for="ptt-key">按键</label><select id="ptt-key"><option value="F8">F8</option><option value="F9">F9</option></select></div>
-      <p class="hint">单点：停在问题处，按住 F8 说话。区间：停在起点按住 F8，看到“起点已记录”后拖到终点，停稳后松开。已选片段或入点、出点也会作为区间；要用播放头拖动区间，请先取消选中片段并清除入点、出点。</p>
+      <div class="ptt-key-row"><strong>按住 <span id="ptt-key-label">F8</span> 说话，松开自动保存</strong></div>
+      <div class="shortcut-row">
+        <span class="shortcut-caption">录音快捷键</span>
+        <output id="ptt-shortcut-display" class="shortcut-display">F8</output>
+        <button id="ptt-record" class="quiet" title="按下一个支持的按键或组合">设置</button>
+        <button id="ptt-save" class="secondary" hidden disabled>保存</button>
+        <button id="ptt-cancel" class="quiet" hidden>取消</button>
+        <button id="ptt-reset" class="quiet" title="恢复本机默认快捷键">恢复默认</button>
+      </div>
+      <p id="ptt-shortcut-hint" class="hint">快捷键由面板、录音助手和命令行共同使用；可在本机命令行执行 cuthere shortcut show 查看。</p>
+      <p class="hint">单点：停在问题处，按住 <span id="ptt-key-label-inline">F8</span> 说话。区间：停在起点按住，看到“起点已记录”后拖到终点，停稳后松开。已选片段或入点、出点也会作为区间；要用播放头拖动区间，请先取消选中片段并清除入点、出点。</p>
     </section>
     <section class="mode-row" aria-label="意见方式">
       <label><input type="radio" name="mode" value="point" checked> 单点意见</label>
@@ -62,6 +71,7 @@
     </details>
   </main>
   <script src="js/cep_adapter.js"></script>
+  <script src="js/hotkey_binding.js"></script>
   <script src="js/bridge.js"></script>
   <script src="js/review_panel.js"></script>
 </body>

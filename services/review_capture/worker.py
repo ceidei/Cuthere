@@ -25,6 +25,7 @@ from typing import Any
 from .audio import MicrophoneRecorder, enumerate_input_devices, recover_interrupted_capture
 from .backends import keymonitor
 from .identity import same_project_path
+from . import shortcut
 from .ptt import PushToTalk, backend_capability
 from .storage import (
     atomic_write_json,
@@ -39,7 +40,7 @@ from .storage import (
 from .timebase import TICKS_PER_SECOND, normalize_interval
 from engine.podcast_edit_runtime import parse_instruction
 
-WORKER_VERSION = "1.2.6"
+WORKER_VERSION = "1.3.0"
 _ID = re.compile(r"^[A-Za-z0-9_-]{8,80}$")
 
 
@@ -126,7 +127,8 @@ def _elapsed_label(ticks: int) -> str:
 
 
 class ReviewCaptureWorker:
-    def __init__(self, ipc_root: Path, idle_timeout: float = 5.0):
+    def __init__(self, ipc_root: Path, idle_timeout: float = 5.0,
+                 shortcut_config: Path | None = None):
         self.ipc_root = ipc_root
         self.inbox = ipc_root / "inbox"
         self.outbox = ipc_root / "outbox"
@@ -148,7 +150,13 @@ class ReviewCaptureWorker:
         self._lock_handle = _single_instance_lock(ipc_root / "worker.lock")
         try:
             self.ptt_capability = backend_capability()
-            self.ptt = PushToTalk(ipc_root)
+            # One authoritative per-user shortcut file, shared with the panel
+            # and with `cuthere shortcut ...`; the panel passes the same path.
+            self.shortcut_store = (shortcut.ShortcutStore(shortcut_config)
+                                   if shortcut_config is not None
+                                   else shortcut.ShortcutStore.for_ipc_root(ipc_root))
+            self.ptt = PushToTalk(ipc_root, shortcut_store=self.shortcut_store,
+                                  platform=self.shortcut_store.platform)
             self._recover_stale_recording()
             self._write_status()
         except BaseException:
@@ -261,12 +269,99 @@ class ReviewCaptureWorker:
                 "push_to_talk_capability": self.ptt_capability,
                 "push_to_talk_armed": self.ptt.armed,
                 "push_to_talk_backend": self.ptt.backend_health(),
+                "shortcut": self.ptt.shortcut_state(),
+                "shortcut_config": str(self.shortcut_store.path),
                 "platform": keymonitor.normalize_platform(),
             })
         except PermissionError as exc:
             # A stale status is recoverable on the next poll; crashing loses the hotkey.
             logging.warning("status publication delayed by a Windows file lock: %s", exc)
         self._last_status_write = time.monotonic()
+
+    # -- recording shortcut ---------------------------------------------
+    def _shortcut_diagnostics(self) -> dict[str, Any]:
+        diagnostic: dict[str, Any] = {}
+        try:
+            path = self.ipc_root / "ptt_key_diagnostic.json"
+            if path.is_file():
+                diagnostic = read_json(path)
+        except (OSError, ValueError):
+            diagnostic = {}
+        last_press = None
+        if diagnostic.get("at") or diagnostic.get("state"):
+            last_press = {key: diagnostic.get(key) for key in
+                          ("at", "hotkey", "state", "backend", "permission", "reason")
+                          if diagnostic.get(key) is not None}
+        return {
+            "last_press": last_press,
+            "armed": self.ptt.armed,
+            "backend": self.ptt.backend_health(),
+            "capability": self.ptt_capability,
+        }
+
+    def _shortcut_report(self, store: shortcut.ShortcutStore | None = None) -> dict[str, Any]:
+        store = store or self.shortcut_store
+        state = store.load(force=True)
+        report = state.snapshot(store.platform)
+        report["recording"] = bool(
+            self.recorder is not None
+            or (self.ptt.current and self.ptt.current.get("state") == "recording"))
+        report["pending"] = self.ptt.pending_binding is not None
+        report["pending_binding"] = self.ptt.pending_binding
+        report["active_binding"] = (
+            self.ptt.take_binding.canonical
+            if self.ptt.current and self.ptt.current.get("state") in {"preparing", "recording"}
+            and self.ptt.take_binding is not None else None)
+        report["conflicts"] = shortcut.conflicts(state.binding, platform=store.platform)
+        report.update(self._shortcut_diagnostics())
+        return report
+
+    def _shortcut_change(self, payload: dict[str, Any], source: str) -> dict[str, Any]:
+        binding = payload.get("binding")
+        if binding in (None, ""):
+            raise shortcut.ShortcutError("empty", "没有读到按键；请按下一个支持的按键或组合。")
+        dry_run = bool(payload.get("dry_run"))
+        state = self.shortcut_store.set(binding, source=source, dry_run=dry_run)
+        report = self._shortcut_report()
+        report["dry_run"] = dry_run
+        report["before"] = state.previous_binding
+        if dry_run:
+            # A preview must show the value that *would* be stored, not the one
+            # that is stored now.
+            preview = state.snapshot(self.shortcut_store.platform)
+            report.update({key: preview[key] for key in
+                           ("binding", "display", "source", "status", "updated_at")})
+        return report
+
+    def _shortcut_reset(self, payload: dict[str, Any]) -> dict[str, Any]:
+        dry_run = bool(payload.get("dry_run"))
+        state = self.shortcut_store.reset(source="reset", dry_run=dry_run)
+        report = self._shortcut_report()
+        report["dry_run"] = dry_run
+        report["before"] = state.previous_binding
+        return report
+
+    def _shortcut_restore_previous(self, payload: dict[str, Any]) -> dict[str, Any]:
+        dry_run = bool(payload.get("dry_run"))
+        state = self.shortcut_store.restore_previous(source="panel", dry_run=dry_run)
+        report = self._shortcut_report()
+        report["dry_run"] = dry_run
+        report["before"] = state.previous_binding
+        return report
+
+    def _shortcut_migrate(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Carry a 1.0 ``localStorage`` preference over, once.
+
+        The panel calls this only when it finds no ``shortcut.json``, so an
+        explicit old F8/F9 choice is preserved exactly once and can never
+        overwrite a newer panel or agent setting.
+        """
+        legacy = payload.get("legacy_value")
+        migrated = self.shortcut_store.migrate_legacy(
+            str(legacy) if legacy is not None else None, source="migration")
+        report = self._shortcut_report()
+        report["migrated"] = migrated is not None
+        return report
 
     def _process_file(self, path: Path) -> None:
         try:
@@ -310,6 +405,10 @@ class ReviewCaptureWorker:
                 "error": type(exc).__name__,
                 "message": str(exc),
             }
+            code = getattr(exc, "code", None)
+            if isinstance(code, str) and code:
+                # Stable machine-readable reason for a rejected shortcut value.
+                result["code"] = code
         atomic_write_json(result_path, result)
         atomic_write_json(reply_path, result)
         path.unlink(missing_ok=True)
@@ -349,6 +448,16 @@ class ReviewCaptureWorker:
         if action == "ptt_ack":
             self.ptt.acknowledge(_safe_id(payload.get("capture_id"), "capture_id"))
             return {"acknowledged": True}
+        if action == "shortcut_show":
+            return self._shortcut_report()
+        if action == "shortcut_set":
+            return self._shortcut_change(payload, "panel")
+        if action == "shortcut_reset":
+            return self._shortcut_reset(payload)
+        if action == "shortcut_restore_previous":
+            return self._shortcut_restore_previous(payload)
+        if action == "shortcut_migrate":
+            return self._shortcut_migrate(payload)
         if action == "shutdown":
             if self.recorder:
                 self._interrupt_active("录音助手收到关闭请求")
@@ -1156,6 +1265,8 @@ class ReviewCaptureWorker:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Cuthere Premiere review capture worker")
     parser.add_argument("--ipc-root", required=True, type=Path)
+    parser.add_argument("--shortcut-config", type=Path, default=None,
+                        help="authoritative per-user shortcut.json (default: derived from --ipc-root)")
     parser.add_argument("--once", action="store_true", help="process the current inbox once; used by acceptance harness")
     args = parser.parse_args(argv)
     try:
@@ -1167,7 +1278,7 @@ def main(argv: list[str] | None = None) -> int:
             encoding="utf-8",
         )
         logging.info("worker start version=%s python=%s", WORKER_VERSION, sys.version.split()[0])
-        worker = ReviewCaptureWorker(args.ipc_root)
+        worker = ReviewCaptureWorker(args.ipc_root, shortcut_config=args.shortcut_config)
 
         def _request_shutdown(_signum: int, _frame: Any) -> None:
             # Exit the loop normally so run()'s finally block saves or parks any

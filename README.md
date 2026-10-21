@@ -2,14 +2,15 @@
 
 **Say the note in Premiere. Let an agent make the edit.**
 
-Hold **F8** while you watch the cut and speak. Cuthere keeps the recording, the transcript and the exact timeline position together, then hands the batch to a local coding agent that plans the change, builds a new sequence and reads the result back from Premiere.
+Hold the recording shortcut while you watch the cut and speak. Cuthere keeps the recording, the transcript and the exact timeline position together, then hands the batch to a local coding agent that plans the change, builds a new sequence and reads the result back from Premiere.
 
-Current version: **1.1.0-alpha.4** — Windows 1.0.1 is the released path; macOS is an experimental candidate. The macOS candidate has automated checks only; it has not been exercised on real Mac hardware with Premiere, a microphone or F8.
+Current version: **1.1.0-alpha.6** — Windows 1.0.1 is the released path; macOS is an experimental candidate. The checks for this candidate run locally on the Windows development host and have not yet run in CI; it has not been exercised on real Mac hardware with Premiere, a microphone or a physical key.
 [Download](https://github.com/ceidei/cuthere/releases/latest) · [Tests and compatibility](docs/en/RELEASE_STATUS.md) · [中文说明](README.zh-CN.md)
 
 ## Features
 
-- **Comment while watching**: F8/F9 hold-to-record, release to save; a note is tied to the playhead, the selected clips or an in/out range.
+- **Comment while watching**: hold-to-record, release to save; a note is tied to the playhead, the selected clips or an in/out range.
+- **Your own recording key**: **F8** on Windows and **Right Option** on macOS by default, or any supported function key, letter, digit or modifier combination. Change it in the panel or from a local agent (`cuthere shortcut set ...`); both use one saved setting.
 - **Transcribe locally**: speech becomes text on your own machine, with playback and manual corrections.
 - **Hand a batch to an agent**: every note keeps its audio, text and position so they can be processed together.
 - **Edit per note**: the agent combines the project, the relevant media and the context to plan changes and calls editing tools to produce a new version.
@@ -35,7 +36,7 @@ Download and unzip the [release package](https://github.com/ceidei/cuthere/relea
 
 > Read README.md, install Cuthere for me, prepare the transcription model, and check recording, transcription and the Premiere connection. Use a separate test project and keep backups of the existing project and extensions.
 
-Save your work, restart Premiere when asked, choose a microphone and record one test note with F8. The first installation needs a network connection for dependencies and the transcription model.
+Save your work, restart Premiere when asked, choose a microphone and record one test note with the default shortcut (F8 on Windows). The first installation needs a network connection for dependencies and the transcription model.
 
 ### Manual install
 
@@ -57,8 +58,8 @@ The installer uses a per-user Python environment and backs up any previous insta
 The candidate source package unpacks to a folder containing `install.sh`:
 
 ```bash
-unzip cuthere-1.1.0-alpha.4-macos-source.zip -d cuthere-1.1.0-alpha.4-macos-source
-cd cuthere-1.1.0-alpha.4-macos-source
+unzip cuthere-1.1.0-alpha.6-macos-source.zip -d cuthere-1.1.0-alpha.6-macos-source
+cd cuthere-1.1.0-alpha.6-macos-source
 
 ./install.sh --check-only   # Python 3.11, FFmpeg, CEP folder, disk, host scope
 ./install.sh                # DEFAULT: prints the plan, writes nothing
@@ -67,12 +68,14 @@ cd cuthere-1.1.0-alpha.4-macos-source
 
 This candidate is scoped to **Apple silicon (arm64) Macs running macOS 14 or later**. The pinned runtime cannot be installed on an Intel Mac, so the installer refuses an unsupported CPU or OS version before changing anything. See [docs/MACOS.md](docs/MACOS.md) for permissions, Function-key conflicts and troubleshooting.
 
-Recording needs macOS **Microphone** permission whichever way a take is started: the F8/F9 key or the panel's own Start/Stop buttons. Hold-to-talk also needs the key-monitoring permission macOS asks for — **Accessibility**, and on some systems **Input Monitoring**. Without key monitoring the panel buttons still record; without microphone permission nothing records. Cuthere cannot grant these permissions; grant the ones the system prompt or the panel's Connection diagnostics asks for.
+Recording needs macOS **Microphone** permission whichever way a take is started: the recording shortcut or the panel's own Start/Stop buttons. Hold-to-talk also needs the key-monitoring permission macOS asks for — **Accessibility**, and on some systems **Input Monitoring**. Without key monitoring the panel buttons still record; without microphone permission nothing records. Cuthere cannot grant these permissions; grant the ones the system prompt or the panel's Connection diagnostics asks for.
+
+The macOS default is **Right Option** (shown as 右 Option); F8/F9 remain available and an old saved F9 is carried over once. The macOS key listener only *observes* keys, so a key Premiere or macOS already uses still performs its own action — pick one that is free. [docs/MACOS.md](docs/MACOS.md) explains the supported values, the left/right Option difference and the one limitation of a modifier-only key.
 
 ## Use
 
 1. Open a saved Premiere project and the Cuthere panel.
-2. Play or park the playhead where something needs changing, hold **F8**, say the note, release.
+2. Play or park the playhead where something needs changing, hold the recording shortcut (F8 on Windows, Right Option on macOS by default), say the note, release.
 3. Listen back and proof-read the text, then record more notes.
 4. Press **Send this batch** to write the handoff files, then run:
 
@@ -81,6 +84,16 @@ Recording needs macOS **Microphone** permission whichever way a take is started:
    ```
 
 5. Give the printed `AGENT_HANDOFF.md` path to a local agent and say: **"The notes are done. Apply this batch, produce a new version and verify the result."**
+
+To change the key yourself or ask an agent to do it:
+
+```powershell
+cuthere shortcut show                  # effective binding, source and diagnostics
+cuthere shortcut set "Ctrl+Shift+K"    # shared with the open panel
+cuthere shortcut reset                 # back to F8 / Right Option
+```
+
+A physical press and a microphone capture are still a user hardware test; a successful command only proves the setting was saved and read back.
 
 `--project-root` is the folder that contains the `.prproj` you were reviewing. The agent lists its plan first and then processes the notes. Keep the Cuthere panel open while it works.
 
