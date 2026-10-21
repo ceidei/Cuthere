@@ -660,7 +660,10 @@ class PushToTalkShortcutTests(unittest.TestCase):
         report = self.worker._dispatch({"action": "shortcut_set",
                                         "payload": {"binding": "Control+Shift+K"}})
         self.assertEqual(report["binding"], "Control+Shift+K")
-        self.assertEqual(report["previous_binding"], "F8")
+        # A fresh store had no file, so the value in force before the change is
+        # this host's default: F8 on Windows, Right Option on macOS.
+        self.assertEqual(report["previous_binding"],
+                         shortcut.default_binding(report["platform"]).canonical)
         self.assertTrue(self.store_path.is_file())
         with self.assertRaises(shortcut.ShortcutError) as caught:
             self.worker._dispatch({"action": "shortcut_set",

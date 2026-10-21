@@ -567,8 +567,8 @@
     },
     {
       "path": "tests/platform/test_shortcut_backends.py",
-      "bytes": 35711,
-      "sha256": "994dc38c64bd457eba9b5fa827630ac102b4b6d4e90cf201022427b6d63a6bc6"
+      "bytes": 35935,
+      "sha256": "0e77d38d6a320234feb7c59f6967fc5dd0fab42c46d5509b4cb5dd5525d480d9"
     },
     {
       "path": "tests/platform/test_transcription_language.py",
