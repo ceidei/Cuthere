@@ -141,7 +141,6 @@
     "evidence": "docs/en/RELEASE_STATUS.md",
     "notes": [
       "The 1.0.0/1.0.1 records above are historical and unchanged; the physical Windows acceptance stays separate from these automated runs.",
-      "The runs belong to the functional candidate commit. The later documentation-only finalization changes documentation and manifests only, and its affected documentation and manifest checks were re-run locally.",
       "Neither run loads the panel in Premiere, presses a physical F8/F9, answers a TCC permission prompt, captures from a microphone or edits a project.",
       "The macOS distribution is experimental until docs/MACOS.md#acceptance-checklist-for-a-real-mac is completed on real hardware.",
       "No permission, physical F8/F9 press, microphone capture, CEP load or agent handoff on macOS is claimed.",
@@ -188,11 +187,11 @@
     ]
   },
   "candidate_1_1_0_alpha_6": {
-    "status": "AUTOMATED_CHECKS_PASSED_ON_THE_DEVELOPMENT_HOST; MACOS_HARDWARE_NOT_ACCEPTED; CI_PENDING",
-    "windows_regression": "Automated checks on the development host only; no new physical Premiere or microphone acceptance.",
+    "status": "AUTOMATED_CHECKS_PASSED_WINDOWS_AND_MACOS_CI; MACOS_HARDWARE_NOT_ACCEPTED",
+    "windows_regression": "Automated checks on Windows CI; no new physical Premiere or microphone acceptance.",
     "macos_hardware_acceptance": "NOT_PERFORMED",
-    "macos_ci_run": "NOT_RUN_FOR_THIS_CANDIDATE",
-    "windows_ci_run": "NOT_RUN_FOR_THIS_CANDIDATE",
+    "macos_ci_run": "PASSED",
+    "windows_ci_run": "PASSED",
     "product_change": "Repairs only: Darwin unknown-key/chord and side-specific modifier release, Windows registration failure and F12 reservation, live-readback freshness/identity, last-good corruption recovery, and committed-blob packaging. The shortcut feature and its supported scope are unchanged.",
     "local_checks": {
       "python_suite": "298 passed, 1 skipped (the directory-symlink alias test that needs the Windows symlink privilege), 54 subtests passed",
@@ -216,15 +215,31 @@
     "not_performed": [
       "A physical Right Option or function key press on a real Mac",
       "A real Windows/Premiere chord, its interception and a real hotkey collision",
-      "Microphone capture, TCC prompts, CEP loading in Premiere and an agent edit on macOS",
-      "A GitHub Actions run for this candidate's commit"
+      "Microphone capture, TCC prompts, CEP loading in Premiere and an agent edit on macOS"
     ],
     "evidence": "docs/en/RELEASE_STATUS.md",
     "notes": [
-      "The alpha.5 block above records the feature candidate and is kept as history; alpha.6 is a repair round on the same feature.",
-      "No CI conclusion is claimed for this candidate. The reviewing step runs the real Windows and macOS workflows and publishes their links.",
-      "No automated result here stands in for real hardware acceptance; scripts and synthetic key events cannot prove a physical key, permission prompt or microphone capture."
-    ]
+      "Automated checks do not establish physical keyboard, microphone, permission prompt or Premiere acceptance."
+    ],
+    "candidate_commit": "03dd0dedb8e4b6acb26f406063efb84b3e2adf4c",
+    "ci_runs": {
+      "windows": {
+        "url": "https://github.com/ceidei/cuthere/actions/runs/39560295016",
+        "conclusion": "success",
+        "python_tests_passed": 299,
+        "subtests_passed": 54,
+        "node_tests_passed": 25
+      },
+      "macos": {
+        "url": "https://github.com/ceidei/cuthere/actions/runs/39560295086",
+        "conclusion": "success",
+        "python_tests_passed": 299,
+        "subtests_passed": 54,
+        "node_tests_passed": 25,
+        "shell_checks_passed": 48,
+        "native_imports": "PASS"
+      }
+    }
   },
   "not_tested": [
     "Other computers",

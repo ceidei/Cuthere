@@ -62,13 +62,13 @@
     },
     {
       "path": "README.md",
-      "bytes": 8657,
-      "sha256": "716afce46511b58d8f02a6a26653bd2f011f71489908c4f7833ed47ec5c814e5"
+      "bytes": 8706,
+      "sha256": "5ea1872e57d99d7ae359e15f889072cad802e16de00ec6653a65a23bad005a25"
     },
     {
       "path": "README.zh-CN.md",
-      "bytes": 7690,
-      "sha256": "d242df99ef8bd9fb7f307a3c1f546eb426995193bf4eade5176f45c423e9d287"
+      "bytes": 7711,
+      "sha256": "ed16158b53dcdd4fbb15d20ea20ae9df0085b1e56fdd340bb470050881a448d0"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
@@ -77,8 +77,8 @@
     },
     {
       "path": "VALIDATION.json",
-      "bytes": 12549,
-      "sha256": "948add97213fb4aaacfd8d63f08af8d4c405e4e9b10fabfbc7ee3c9b12b02ab2"
+      "bytes": 12496,
+      "sha256": "239b83e7a6ae20f5ff8e1973dd8f6aa078534f7a46766e8f5459c28d7a0123b0"
     },
     {
       "path": "VERSION",
@@ -112,13 +112,13 @@
     },
     {
       "path": "docs/MACOS.md",
-      "bytes": 33137,
-      "sha256": "a03cf25e57e037b52fff476af2170d16dbbaafc623fd17913261a39e289c41f1"
+      "bytes": 31837,
+      "sha256": "89b45fd85950dfbb57658dbc6ea31b4e1a598a1f6cfcc5747d6d75f6ceddb812"
     },
     {
       "path": "docs/RELEASE_STATUS.md",
-      "bytes": 11854,
-      "sha256": "6edba37b2ee30ae08db17e29cb985a03dd0164541022fffefd351f2510434d61"
+      "bytes": 3587,
+      "sha256": "13af2215156a8f1c584f3a9cae32bf0fd26f12d10c7b707242608ab4e4fd916c"
     },
     {
       "path": "docs/TROUBLESHOOTING.md",
@@ -147,8 +147,8 @@
     },
     {
       "path": "docs/en/RELEASE_STATUS.md",
-      "bytes": 12771,
-      "sha256": "0b2d8e433faac6ac35d47b8d74fc75ce45402a4d885f0e7c49b2fa95e3ddab59"
+      "bytes": 4015,
+      "sha256": "abe99e7913406c2cd9d7778debd6bb91b26fd098a72a8d3390030f159dba2039"
     },
     {
       "path": "docs/en/TROUBLESHOOTING.md",

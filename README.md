@@ -4,8 +4,8 @@
 
 Hold the recording shortcut while you watch the cut and speak. Cuthere keeps the recording, the transcript and the exact timeline position together, then hands the batch to a local coding agent that plans the change, builds a new sequence and reads the result back from Premiere.
 
-Current version: **1.1.0-alpha.6** — Windows 1.0.1 is the released path; macOS is an experimental candidate. The checks for this candidate run locally on the Windows development host and have not yet run in CI; it has not been exercised on real Mac hardware with Premiere, a microphone or a physical key.
-[Download](https://github.com/ceidei/cuthere/releases/latest) · [Tests and compatibility](docs/en/RELEASE_STATUS.md) · [中文说明](README.zh-CN.md)
+Current version: **1.1.0-alpha.6** — Windows 1.0.1 is the released path; macOS is an experimental candidate. Automated checks pass on Windows and Apple silicon macOS. It has not been exercised on real Mac hardware with Premiere, a microphone or a physical key.
+[Windows stable](https://github.com/ceidei/cuthere/releases/latest) · [macOS experimental](https://github.com/ceidei/cuthere/releases/tag/v1.1.0-alpha.6) · [Tests and compatibility](docs/en/RELEASE_STATUS.md) · [中文说明](README.zh-CN.md)
 
 ## Features
 

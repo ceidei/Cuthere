@@ -4,7 +4,7 @@
 
 按住录音快捷键说话，松开后自动保存录音、转写和时间线位置。提完一批意见，交给本地 Codex 等智能体，结合工程与音视频内容生成新的剪辑版本。
 
-当前版本：**1.1.0-alpha.6**——Windows 1.0.1 为发布路径，macOS 为实验性候选。本候选的自动化检查仅在本机 Windows 开发环境运行，尚未有对应的 CI 运行，也**没有**在真实 Mac 上配合 Premiere、麦克风和真实按键运行过。[下载安装包](https://github.com/ceidei/cuthere/releases/latest) · [测试与兼容范围](docs/RELEASE_STATUS.md) · [English README](README.md)
+当前版本：**1.1.0-alpha.6**。Windows 1.0.1 为稳定参考版本，macOS 为实验性版本。两平台自动化检查已通过；没有在真实 Mac 上配合 Premiere、麦克风与实体按键完成验收。[Windows 稳定版](https://github.com/ceidei/cuthere/releases/latest) · [macOS 实验版](https://github.com/ceidei/cuthere/releases/tag/v1.1.0-alpha.6) · [测试与兼容范围](docs/RELEASE_STATUS.md) · [English README](README.md)
 
 ## 功能
 

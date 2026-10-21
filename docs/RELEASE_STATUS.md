@@ -31,67 +31,26 @@
 
 自动化检查覆盖 Python 测试、Node 面板/桥接测试、桥接宿主契约，以及安装与恢复文件系统测试；运行方式见[开发与测试](DEVELOPMENT.md)。
 
-## 1.1.0-alpha.4 候选
+## 1.1.0-alpha.6：自定义录音快捷键
 
-本候选使源码可在 macOS 安装，并补齐英文文档。macOS 仍为**实验性**：两个平台的自动化检查已在 GitHub 运行器上通过（记录见下），但没有 macOS 真机验收。
+macOS 默认使用右 Option，Windows 默认使用 F8。用户可在面板中设置、保存和恢复录音键，也可让智能体通过 `cuthere shortcut` 命令修改同一份设置。录音进行中改键会延后生效。
 
-alpha.4 修正了已发布的 alpha.3 在 GitHub 运行器上报告的问题：同一工程的不同路径写法（macOS 的 `/var` 与 `/private/var`、Windows 的 8.3 短名）不再被当成另一个工程；源码清单按内容判断文本哈希，因此全新检出与清单一致；工作流在 Python 测试失败后仍会执行相互独立的 Node、原生导入、shell 与打包检查。alpha.3 修复了两次安装后沙箱恢复检查的预期对象，把 shell 入口记录为可执行并固定 LF 换行，并更正了权限与产品说明。
+### 自动化检查
 
-## 1.1.0-alpha.6 候选：快捷键复核修复
+以下检查对应提交 [`03dd0ded`](https://github.com/ceidei/cuthere/commit/03dd0dedb8e4b6acb26f406063efb84b3e2adf4c)：
 
-本候选只修复独立复核发现的五个具体缺陷，不新增功能、不扩大支持范围。macOS 仍为**实验性**，本候选尚无 CI 运行记录。
-
-- **macOS 未知按键与修饰键组合。** 任何真实非修饰键（含标点、Escape 和不在可绑定语法内的按键）都会取消“只按修饰键”的录音，并被计入“已有按键按住”的判断；其他修饰键或按键已按住时，单独的修饰键不会开始录音（两种先后顺序都已覆盖）。当另一侧修饰键让同族标志保持置位时，必需一侧的松开用 `CGEventSourceKeyState` 按该侧原生状态判断，不再依赖聚合的 `CGEventFlags`；重新进入录音状态、监听被停用后也用同样有界的原生读取核对左右两侧，无法确认时不会凭猜测开始录音。
-- **Windows 注册失败。** `RegisterHotKey` 被拒绝时，面板、命令行和 `ptt_key_diagnostic.json` 会显示 `registration_failed`，不再报告为已就绪/已应用，也不会在未注册的组合上开始录音。正在进行的录音在注册丢失时停止并保留音频；显式的“仅观察”诊断模式单独标记。Windows 现在拒绝 `F12` 及以 `F12` 为主键的组合（Microsoft 保留给调试器），macOS 仍可绑定 `F12`。
-- **实时读回。** 只有心跳不超过 10 秒、且配置路径与平台都与请求一致的 `status.json` 才算运行中的助手。过期、损坏或属于其他运行目录的文件不会再宣称助手在运行，也不能证明新设置已应用。命令行分别输出 configured / effective / applied / pending：写入成功只代表已保存，写设置之前生成的状态不能当作写入后的确认。
-- **损坏恢复。** `shortcut.last-good.json` 现在保存最近一次成功生效的值（F9 之后设 F10，就保存 F10），而不是上一次设置（F9）。已加载的读取器或新建的读取器在当前文件被截断或写坏后都会恢复到该值，保留明确诊断；`previous_binding` 与 `restore-previous` 仍是独立的回滚历史。
-- **打包。** alpha.6 源码包从提交对象重新导出构建，每个条目都与 `git cat-file` 的提交字节比对；单包精确哈希与 LF 归一化的仓库清单保持分开。alpha.5 的包原样保留。
-
-本机 Windows 开发环境的自动化检查：**298 项 Python 测试通过**（1 项跳过：目录符号链接别名用例需要本机没有的权限）、**54 项子测试通过**、**25 项 Node 面板/桥接测试通过**。覆盖上述负例，包括具体的修饰键/按键先后顺序、`RegisterHotKey` 被拒绝且主键物理按下、过期或配置不匹配的状态文件，以及已加载/新建读取器的损坏恢复。这些检查没有真实按键或麦克风采集，本候选也没有 CI 运行记录。
-
-## 1.1.0-alpha.5 候选：可自定义录音快捷键
-
-macOS 默认改为**右 Option**，Windows 保留 **F8**。快捷键可以在面板里录制、保存、取消和恢复默认，也可以用 `cuthere shortcut show|set|reset|restore-previous|test-state|grammar` 修改。面板、录音助手和命令行共用同一份用户设置 `<runtime>/shortcut.json`：命令行改动会出现在已打开的面板并立即生效，旧的面板 localStorage 偏好只在没有该文件时迁移一次，不会覆盖较新的设置。
-
-支持的最大范围是：`Control`/`Option`/`Shift`/`Command`（含 `Left`/`Right` 写法）加一个主键（`F1`–`F12`、`A`–`Z`、`0`–`9`、`Space`、`Enter`、`Tab`、`Backspace`、`Insert`、`Delete`、`Home`、`End`、`PageUp`、`PageDown`、四个方向键）；macOS 另支持单独使用一个左右区分的修饰键。`Escape` 与 `Fn`/Globe 不提供绑定，Windows 不支持左右修饰键与“只按修饰键”，不支持的值会被明确拒绝而不是悄悄退回 F8。录音进行中修改快捷键只登记为待生效，不会中途换键。
-
-- 已在本机 Windows 开发机运行的自动化检查：273 项 Python 测试通过（1 项跳过：目录符号链接别名用例需要本机没有的权限），50 项子测试通过，25 项 Node 面板/桥接测试通过。覆盖解析与校验矩阵（Python 与面板 JS 使用同一份测试向量）、首次默认值、旧偏好迁移、持久化/重置/非法输入、损坏文件沿用上一次可用值、macOS 左右 Option 与 `flagsChanged` 释放、主键与修饰键两种释放顺序、短按与自动重复、修饰键单独绑定被其他按键打断时取消且不生成意见（音频保留）、在其他应用里按下组合键既不会开始也不会取消录音、Windows F8 回归与组合注册、命令行与桥接改动被运行中的助手读取、录音中不换键、面板录制的值与命令行收敛到同一份设置。
-- 未执行：真实 Mac 上按下右 Option、真实 Windows/Premiere 组合键、真实麦克风，以及把这些按键在 Premiere 前台拦截或冲突的实际情况。自动化测试使用伪造的按键事件，不能替代真机验收。本候选提交对应的 GitHub 工作流尚未运行。
-
-### 已记录的自动化运行
-
-两个平台的工作流在功能候选提交 [`7bb307a2d88e6dfa0cfc0353f776d7af30080fd8`](https://github.com/ceidei/cuthere/commit/7bb307a2d88e6dfa0cfc0353f776d7af30080fd8)（[ceidei/cuthere](https://github.com/ceidei/cuthere)）上均**执行成功**：
-
-| 运行 | 运行器 | 结果 | 覆盖内容 |
-|---|---|---|---|
-| [Windows 运行 39449546296](https://github.com/ceidei/cuthere/actions/runs/39449546296) | `windows-latest` | 成功 | 204 项 Python 测试；15 项 Node 面板与桥接测试；PowerShell 语法与安装/恢复文件系统用例；Windows 白名单 dry-run；`update_manifests.py --check` |
-| [macOS 运行 39449546127](https://github.com/ceidei/cuthere/actions/runs/39449546127) | `macos-15`（arm64） | 成功 | 真实 Darwin 解释器上的 204 项 Python 测试（含 arm64 与 macOS 14 断言）；15 项 Node 测试；macOS 运行依赖与 PyObjC 的安装和导入；`install_macos.py --check-only`；三个 shell 入口的 `bash -n`；48 项沙箱安装/升级/恢复/清理检查，0 项失败；macOS 白名单 dry-run；`update_manifests.py --check` |
-
-这些运行只是自动化证据：两个平台都没有在 Premiere 中加载面板、没有真实按下功能键或右 Option、没有经过 TCC 授权提示，也没有采集麦克风。上文 1.0.0 与 1.0.1 的 Windows 验收记录于真实硬件，仍是实际剪辑行为的参考，CI 运行既未重复也未扩展它。上表的两次运行对应提交 `7bb307a2`，即加入可自定义录音快捷键之前的代码；本候选需要自己的运行记录。
-
-| 证据 | Windows | macOS |
+| 平台 | 结果 | 覆盖范围 |
 |---|---|---|
-| 源码可在本平台解释器导入 | 是（既有测试与 CI） | 是：CI 的 arm64 运行器上真实 Darwin 解释器导入运行依赖与 PyObjC |
-| 安装/暂存/回滚逻辑 | PowerShell 测试套件（CI） | 沙箱 HOME 上的 Python 测试，以及 CI 中的 48 项沙箱安装/升级/恢复/清理检查 |
-| 面板/桥接路径逻辑 | Node.js 测试（CI） | 注入 darwin 平台对象的 Node.js 测试（CI） |
-| 可自定义录音快捷键 | 解析、持久化、共享设置与 Windows 注册的自动化测试（本地；Windows CI 运行待本候选提交） | 解析与面板录制流程的自动化测试，右 Option 的左右区分用伪造的 `flagsChanged` 事件覆盖；真实按键未执行 |
-| 快捷键复核修复（alpha.6） | 未知按键/组合、注册冲突、实时读回的新鲜度与身份、last-good 恢复、提交字节打包均在本地覆盖 | 原生侧状态与重新进入录音状态后的过期边缘用伪 Quartz 表面覆盖；未在真实 Mac 按键 |
-| 运行依赖与 PyObjC 导入 | 1.0.1 运行环境 | CI 的 arm64 运行器上安装并导入；不创建事件监听、麦克风流或权限请求 |
-| 真实 Premiere、真实麦克风、真实功能键 | 1.0.1 验收（本候选之前） | **未执行** |
-| 真实代理交接 | 1.0 验收（Codex） | 未执行 |
-| 真实 Mac 硬件：安装器、TCC 提示、CEP 加载、Premiere 剪辑 | 不适用 | **未执行** |
+| [Windows](https://github.com/ceidei/cuthere/actions/runs/39560295016) | 通过 | 299 项 Python 测试、54 项子测试、25 项 Node 测试、PowerShell 安装与恢复检查、发布文件清单 |
+| [macOS arm64](https://github.com/ceidei/cuthere/actions/runs/39560295086) | 通过 | 同样的 Python 与 Node 测试、原生依赖安装和导入、安装器预检、shell 语法、48 项沙箱安装/升级/恢复/清理检查、发布文件清单 |
 
-macOS 候选的运行范围是 Apple silicon 且 macOS 14 或更新版本：官方 wheel 元数据中，`onnxruntime==1.31.0` 只提供 macOS 14+ arm64 轮子，没有 Intel Mac 可用的 macOS x86_64 轮子，因此安装器会拒绝其他主机。不声称支持 Intel Mac。
+快捷键检查覆盖左右修饰键、组合键松开、短按与重复、前台切换、注册失败、设置同步和损坏恢复。自动化使用合成按键与测试目录，不代表实际键盘或 Premiere 验收。
 
-macOS 在[真机验收清单](MACOS.md#acceptance-checklist-for-a-real-mac)完成并记录到本文之前保持实验性。Windows 1.0.1 仍是稳定参考版本；本候选要替换它之前必须在 Windows 上复验。
+### 兼容范围与待测项目
 
-## 已知限制
+- macOS 实验版：Apple silicon、macOS 14 或更新版本。Intel Mac 暂不支持。
+- **未执行**：真实 Mac 上的右 Option、麦克风、系统权限提示、Premiere 面板加载及按意见剪辑。
+- 自定义 Windows 组合键尚未完成真实 Premiere 使用验收；Windows 1.0.0/1.0.1 的历史验收范围见上文。
+- Mac 的按键监听只观察、不拦截；其他程序或 Premiere 使用同一键时仍可能响应。Fn/Globe 和 Escape 不支持绑定；Windows 也不支持 F12、左右区分或单独修饰键。
 
-- 转写可能出现同音错字，支持回听与文字修订。
-- 内置固定编辑命令覆盖普通 25 fps 序列中最长 10 秒的明确区间删除。
-- 复杂意见由智能体分析并调用工具处理，需要逐项核对结果。
-- 工作流测试使用已缓存的 medium 模型；空缓存下首次下载与运行尚未完成相同流程验证。
-- 其他电脑、Premiere 版本、智能体，以及复杂效果、嵌套、多机位、变速和其他帧率，需要单独验证。
-- 导入 XML 可能显示效果转换提示，请核对报告与受影响音视频。
-
-使用步骤见 [README](../README.md)，故障处理见[安装与运行排查](TROUBLESHOOTING.md)。
+macOS 保持实验版，真机操作见[验收清单](MACOS.md#acceptance-checklist-for-a-real-mac)。[实验版下载](https://github.com/ceidei/cuthere/releases/tag/v1.1.0-alpha.6)；[开发与测试](DEVELOPMENT.md)。
