@@ -68,6 +68,10 @@ cd cuthere-1.1.0-alpha.6-macos-source
 
 This candidate is scoped to **Apple silicon (arm64) Macs running macOS 14 or later**. The pinned runtime cannot be installed on an Intel Mac, so the installer refuses an unsupported CPU or OS version before changing anything. See [docs/MACOS.md](docs/MACOS.md) for permissions, Function-key conflicts and troubleshooting.
 
+The installer in this source tree enables the development-extension flag for **CEP 11 (Premiere Pro 2024)** and **CEP 12 (Premiere Pro 2025)** by default, covering the loading settings both releases need; other causes of a missing panel are still possible. `./install.sh --apply --cep-version 11` (or `12`) restricts the change to one version.
+
+The published **1.1.0-alpha.6** package predates this change and only sets CEP 12 by default. For Premiere Pro 2024, either run that package's installer with `./install.sh --apply --cep-version 11`, or add the missing key with `defaults write com.adobe.CSXS.11 PlayerDebugMode -string 1`. Installing from this source tree sets both. Then fully quit Premiere (⌘Q) and reopen it.
+
 Recording needs macOS **Microphone** permission whichever way a take is started: the recording shortcut or the panel's own Start/Stop buttons. Hold-to-talk also needs the key-monitoring permission macOS asks for — **Accessibility**, and on some systems **Input Monitoring**. Without key monitoring the panel buttons still record; without microphone permission nothing records. Cuthere cannot grant these permissions; grant the ones the system prompt or the panel's Connection diagnostics asks for.
 
 The macOS default is **Right Option** (shown as 右 Option); F8/F9 remain available and an old saved F9 is carried over once. The macOS key listener only *observes* keys, so a key Premiere or macOS already uses still performs its own action — pick one that is free. [docs/MACOS.md](docs/MACOS.md) explains the supported values, the left/right Option difference and the one limitation of a modifier-only key.

@@ -6,6 +6,14 @@ macOS-specific items (Function keys, Accessibility/Input Monitoring/Microphone p
 
 Save your project, quit Premiere completely, reopen it and select **Window → Extensions → Cuthere · 剪这儿**. Check the recording-helper and edit-connection status in the panel. If Premiere was started by an automated launcher or by a script, close it and start it the way you normally do.
 
+On macOS also check the development-extension flag for the CEP version your Premiere uses: Premiere Pro 2024 reads `com.adobe.CSXS.11` and 2025 reads `com.adobe.CSXS.12`; both should be `1` (the installer in this source tree writes both by default). If the panel came from an older installation or an explicit `--cep-version 12`, re-run `./install.sh --apply` from this source tree, or set the missing one:
+
+```bash
+defaults write com.adobe.CSXS.11 PlayerDebugMode -string 1
+```
+
+The published `1.1.0-alpha.6` package only sets CEP 12 by default; with that package, run `./install.sh --apply --cep-version 11` or use the `defaults write` command above to add CEP 11. Then **fully quit Premiere (⌘Q)** and reopen it; closing the window is not enough. If both Premiere Pro 2024 and 2025 are installed, keep both flags set. `cuthere doctor` reports the actual CEP 11 and CEP 12 values separately.
+
 ## Holding the recording shortcut records nothing
 
 Keep Premiere in front and confirm the panel shows the helper connected, then check the selected microphone and input level. Start with the system default input, then pick a specific microphone and channel if playback is silent.
@@ -61,7 +69,7 @@ Look for a conversion-report or media-relink dialog in Premiere. After handling 
 ./uninstall.sh --apply --restore-previous       # uninstall and restore the previous version
 ```
 
-Uninstall keeps the project, its source media and the notes stored in the project folder. Restart Premiere afterwards. On macOS, `--purge-runtime` only removes this tool's own runtime files and must be run separately from `--restore-previous`; combining them is refused.
+Uninstall keeps the project, its source media and the notes stored in the project folder. Restart Premiere afterwards. On macOS, uninstall restores every CEP domain the installation changed (a key that did not exist before is removed again). `--purge-runtime` only removes this tool's own runtime files and must be run separately from `--restore-previous`; combining them is refused.
 
 ## Reporting a problem
 

@@ -6,6 +6,14 @@ macOS 专属问题（功能键与媒体键、辅助功能/输入监控/麦克风
 
 保存工程，退出并重新打开 Premiere，再打开 **窗口 → 扩展 → Cuthere · 剪这儿**。检查面板中的录音助手与剪辑连接是否就绪。如果是脚本或自动化启动器拉起的 Premiere，先退出再用平时的桌面方式启动一次。
 
+macOS 上还要确认对应 CEP 版本的开发扩展加载设置：Premiere Pro 2024 读取 `com.adobe.CSXS.11`，2025 读取 `com.adobe.CSXS.12`，两个键都应为 `1`（本源码树的安装器默认同时写入）。如果面板来自较早的安装或用了 `--cep-version 12`，用包含本修复的源码树重新运行 `./install.sh --apply`，或补写缺失的一项：
+
+```bash
+defaults write com.adobe.CSXS.11 PlayerDebugMode -string 1
+```
+
+已发布的 `1.1.0-alpha.6` 安装包默认只写 CEP 12；用该包安装后，可运行 `./install.sh --apply --cep-version 11` 或上面的 `defaults write` 补上 CEP 11。随后完整退出（⌘Q）并重新打开 Premiere，仅关闭窗口不够；同时装了 2024 与 2025 时两个键都要保持为 `1`。`cuthere doctor` 会分别显示 CEP 11 与 CEP 12 的实际值。
+
 ## 按住录音快捷键没有录到声音
 
 保持 Premiere 在前台，确认面板显示助手已连接，并检查所选麦克风与输入电平。先尝试系统默认输入，再选择具体麦克风和输入通道。
@@ -61,7 +69,7 @@ Windows 上如果诊断文件显示 `state: registration_failed`，说明 `Regis
 ./uninstall.sh --apply --restore-previous        # 卸载并恢复安装前版本
 ```
 
-卸载保留工程、源媒体及工程目录中的意见文件。完成后重启 Premiere。macOS 的 `--purge-runtime` 只清理本工具自己的运行文件，可与 `--restore-previous` 分开执行；两者同时使用会被拒绝。
+卸载保留工程、源媒体及工程目录中的意见文件。完成后重启 Premiere。macOS 卸载会分别恢复安装前每个 CEP 域的值，原先不存在的键会被删除。macOS 的 `--purge-runtime` 只清理本工具自己的运行文件，可与 `--restore-previous` 分开执行；两者同时使用会被拒绝。
 
 ## 反馈问题
 

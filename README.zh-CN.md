@@ -67,6 +67,10 @@ cd cuthere-1.1.0-alpha.6-macos-source
 
 本候选仅面向 **Apple silicon（arm64）且系统为 macOS 14 或更新版本** 的 Mac。锁定的运行依赖无法安装到 Intel Mac，因此安装器会在写入任何文件之前拒绝不支持的 CPU 或系统版本。权限、功能键冲突与排查见 [docs/MACOS.md](docs/MACOS.md)。
 
+本源码树中的安装器默认同时写入 **CEP 11（Premiere Pro 2024）** 与 **CEP 12（Premiere Pro 2025）** 的开发扩展加载设置，覆盖两个版本所需的加载设置；面板不出现仍可能有其他原因。`./install.sh --apply --cep-version 11`（或 `12`）可只改其中一个。
+
+已发布的 **1.1.0-alpha.6** 安装包早于这项修复，默认只写 CEP 12。使用 Premiere Pro 2024 时，可用该包的安装器运行 `./install.sh --apply --cep-version 11`，或执行 `defaults write com.adobe.CSXS.11 PlayerDebugMode -string 1`；改用本源码树安装则会同时写入两项。随后完整退出（⌘Q）并重新打开 Premiere。
+
 录音无论用录音快捷键还是面板自己的“开始/停止”按钮，都需要 macOS 的**麦克风**权限。按住说话还需要系统为按键监听要求的权限——通常是**辅助功能**，部分系统还会要求**输入监控**。缺少按键监听权限时，面板按钮仍可录音；缺少麦克风权限时则无法录音。Cuthere 不能代替用户授权，请按系统提示或面板“连接诊断”中请求的权限授予。
 
 macOS 默认为**右 Option**（面板显示“右 Option”），F8/F9 仍可用，旧的 F9 选择会被沿用一次。macOS 的按键监听只观察、不拦截，因此 Premiere 或系统已占用的键仍会照常执行原动作，请选一个空闲的键。支持范围、左右 Option 的区别，以及“单独修饰键”的唯一限制见 [docs/MACOS.md](docs/MACOS.md)。

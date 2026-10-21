@@ -13,11 +13,11 @@ Guarantees, all enforced here rather than by shell quoting:
   explicit ``--uninstall`` action);
 * everything lives under the current user's home: no sudo, no /Library, no
   system Python changes, no Homebrew;
-* the previous panel folder, the previous ``PlayerDebugMode`` value, the
+* the previous panel folder, the previous ``PlayerDebugMode`` values, the
   previous install record and the previous CLI wrapper are moved/copied into a
   versioned backup first (also with ``--no-defaults``);
-* any failure rolls the extension folder, the defaults value, the installation
-  record and the CLI wrapper back;
+* any failure rolls the extension folder, every ``PlayerDebugMode`` domain the
+  run already changed, the installation record and the CLI wrapper back;
 * uninstalling removes the generated ``bin/cuthere`` command and, with
   ``--restore-previous``, restores the previous record and wrapper target;
   ``--purge-runtime`` only deletes Cuthere's own runtime artifacts;
@@ -164,7 +164,9 @@ class Options:
     # recorded language is preserved, or auto detection is used for a new install.
     language: str | None = None
     python: Path | None = None
-    cep_version: str = "12"
+    # None means "use the supported default set" (CEP 11 and CEP 12); an
+    # explicit value keeps the single-version override.
+    cep_version: str | None = None
     runtime_root: Path | None = None
     extension_root: Path | None = None
     no_defaults: bool = False
@@ -375,6 +377,55 @@ def resolve_language(options: Options) -> tuple[str, str]:
     return "auto", "default-auto"
 
 
+def cep_versions(options: Options) -> tuple[str, ...]:
+    """CEP generations this run covers (both supported ones by default)."""
+    return platform_paths.cep_versions(options.cep_version)
+
+
+def defaults_targets(options: Options) -> tuple[str, ...]:
+    """PlayerDebugMode domains this run writes (empty with --no-defaults)."""
+    return () if options.no_defaults else platform_paths.ssxs_defaults_domains(options.cep_version)
+
+
+def defaults_plan(options: Options) -> dict[str, Any]:
+    """The dry-run description of the PlayerDebugMode change."""
+    domains = defaults_targets(options)
+    if not domains:
+        return {"mode": "skipped", "reason": "--no-defaults", "key": "PlayerDebugMode",
+                "domains": [], "changes": []}
+    versions = cep_versions(options)
+    if options.cep_version is None:
+        note = ("default: enable unsigned development extensions for every supported CEP "
+                "generation (CEP 11 for Premiere Pro 2024, CEP 12 for Premiere Pro 2025, "
+                "including a Mac with both installed); pass --cep-version N to restrict it")
+    else:
+        note = f"explicit: only CEP {versions[0]} (--cep-version {versions[0]})"
+    return {
+        "mode": "default" if options.cep_version is None else "explicit",
+        "key": "PlayerDebugMode",
+        "value": "1",
+        "versions": list(versions),
+        "domains": list(domains),
+        "changes": [{"domain": domain, "key": "PlayerDebugMode", "value": "1",
+                     "previous_saved": True} for domain in domains],
+        "note": note,
+    }
+
+
+def recorded_defaults_domains(record: dict[str, Any]) -> list[str]:
+    """Domains an installation record says were changed.
+
+    New records carry ``defaults_domains``; records written before the CEP 11
+    fix only have the single ``defaults_domain`` string. Reading both keeps an
+    old installation uninstallable after this update.
+    """
+    recorded = record.get("defaults_domains")
+    if isinstance(recorded, list) and recorded:
+        return [str(domain) for domain in recorded]
+    single = record.get("defaults_domain")
+    return [str(single)] if single else []
+
+
 def prepare_panel_manifest(panel_stage: Path) -> dict[str, Any]:
     """Make the staged macOS panel manifest carry no Windows-only CEP flags.
 
@@ -443,8 +494,7 @@ def build_plan(options: Options, *, host: HostCommands | None = None,
                    "requirements": "requirements-macos.txt",
                    "optional": "requirements-macos-optional.txt (PyObjC key backend; a failed optional "
                                "install is reported in the receipt and does not abort the install)"},
-        "defaults": ({"domain": platform_paths.ssxs_defaults_domain(options.cep_version), "key": "PlayerDebugMode",
-                      "value": "1", "previous_saved": True} if not options.no_defaults else "skipped (--no-defaults)"),
+        "defaults": defaults_plan(options),
         "model": {"name": options.model, "download": bool(options.download_model),
                   "note": "weights are downloaded only with --download-model and are never bundled; "
                           "a missing cache is reported and does not abort the install"},
@@ -460,7 +510,7 @@ def build_plan(options: Options, *, host: HostCommands | None = None,
              else "check the transcription model cache; warn (do not fail) when it is not prepared"),
             "write runtime.json into the staged panel and remove the Windows-only CEF switches",
             "back up the existing panel, retire a matching legacy bundle, move the staged panel into place",
-            "save the previous PlayerDebugMode value, then enable it for the current user",
+            "save the previous PlayerDebugMode value for each CEP domain, then enable it for the current user",
             "install current_install.json and print the next steps",
         ],
         "preserves": ["existing panel folders (backed up)", "installation records (copied)",
@@ -569,12 +619,14 @@ def install(options: Options, *, host: HostCommands | None = None,
     backup_root = runtime / "backups"
     backups: list[tuple[Path, Path]] = []  # (original, backup)
     previous_defaults: dict[str, str] = {}
+    # Every domain this run has already changed, so a failure in the second one
+    # restores the first instead of leaving it enabled.
+    defaults_touched: list[str] = []
     previous_record = runtime / "current_install.json"
     previous_record_text = previous_record.read_text(encoding="utf-8") if previous_record.exists() else None
     wrapper_path = runtime / "bin" / "cuthere"
     previous_wrapper_path: Path | None = None
     wrapper_written = False
-    defaults_written = False
     moved_panel = False
     log: list[str] = []
 
@@ -703,13 +755,20 @@ def install(options: Options, *, host: HostCommands | None = None,
         moved_panel = True
         note(f"installed panel: {destination}")
         if not options.no_defaults:
-            domain = platform_paths.ssxs_defaults_domain(options.cep_version)
-            current = host.read_defaults(domain, "PlayerDebugMode")
-            if current is not None:
-                previous_defaults[domain] = current
-            host.write_defaults(domain, "PlayerDebugMode", "1")
-            defaults_written = True
-            note(f"enabled unsigned CEP development extension for the current user: {domain} PlayerDebugMode=1")
+            for domain in defaults_targets(options):
+                current = host.read_defaults(domain, "PlayerDebugMode")
+                if current is not None:
+                    previous_defaults[domain] = str(current)
+                defaults_touched.append(domain)
+                host.write_defaults(domain, "PlayerDebugMode", "1")
+                read_back = host.read_defaults(domain, "PlayerDebugMode")
+                if str(read_back) != "1":
+                    raise InstallError(
+                        f"{domain} PlayerDebugMode did not read back as 1 (read {read_back!r}); "
+                        "the domains already enabled in this run are restored"
+                    )
+                note(f"enabled unsigned CEP development extension for the current user: "
+                     f"{domain} PlayerDebugMode=1")
         wrapper = write_cli_wrapper(runtime, venv_python, version_root, bridge)
         wrapper_written = True
         record = {
@@ -732,7 +791,12 @@ def install(options: Options, *, host: HostCommands | None = None,
             "optional_dependencies": {"key_backend": optional_status},
             "panel_manifest": manifest_status,
             "cep_version": options.cep_version,
-            "defaults_domain": (None if options.no_defaults else platform_paths.ssxs_defaults_domain(options.cep_version)),
+            "cep_versions": list(cep_versions(options)),
+            "defaults_domains": ([] if options.no_defaults else list(defaults_targets(options))),
+            # Kept for readers of pre-fix records; a default install now covers
+            # two domains, so only an explicit single-version run fills it.
+            "defaults_domain": (None if options.no_defaults or options.cep_version is None
+                                else platform_paths.ssxs_defaults_domain(options.cep_version)),
             "previous_defaults": previous_defaults,
             "previous_install_record": (str(version_root / "previous_install.json") if previous_record_text else None),
             "previous_cli_wrapper": (str(previous_wrapper_path) if previous_wrapper_path else None),
@@ -746,14 +810,22 @@ def install(options: Options, *, host: HostCommands | None = None,
         return {"status": "INSTALLED", "record": record, "log": log}
     except BaseException as exc:
         note(f"failure: {type(exc).__name__}: {exc}")
-        rollback_error = None
-        try:
-            if defaults_written:
-                domain = platform_paths.ssxs_defaults_domain(options.cep_version)
+        rollback_problems: list[str] = []
+        # Restore every domain that was already changed, in reverse order. One
+        # failing restore must not skip the remaining domains.
+        for domain in reversed(defaults_touched):
+            try:
                 if domain in previous_defaults:
                     host.write_defaults(domain, "PlayerDebugMode", previous_defaults[domain])
                 else:
                     host.delete_defaults(domain, "PlayerDebugMode")
+                note(f"restored the previous PlayerDebugMode state of {domain}")
+            except Exception as rollback_exc:  # pragma: no cover - reported, not hidden
+                rollback_problems.append(
+                    f"{domain}: {type(rollback_exc).__name__}: {rollback_exc}"
+                )
+                note(f"ROLLBACK FAILED for {domain}: {type(rollback_exc).__name__}: {rollback_exc}")
+        try:
             if moved_panel and destination.exists():
                 failed = assert_child(backup_root / f"failed_{platform_paths.PANEL_FOLDER}_{stamp}", runtime, "failed panel")
                 shutil.move(str(destination), str(failed))
@@ -775,9 +847,12 @@ def install(options: Options, *, host: HostCommands | None = None,
                     pass
             elif wrapper_written and wrapper_path.exists():
                 wrapper_path.unlink()
-        except Exception as rollback_exc:  # pragma: no cover - reported, not hidden
-            rollback_error = f"{type(rollback_exc).__name__}: {rollback_exc}"
-            note(f"ROLLBACK FAILED: {rollback_error}; backups are under {backup_root}")
+        except Exception as rollback_exc:
+            rollback_problems.append(
+                f"panel/record/wrapper: {type(rollback_exc).__name__}: {rollback_exc}"
+            )
+            note(f"ROLLBACK FAILED: {type(rollback_exc).__name__}: {rollback_exc}; backups are under {backup_root}")
+        rollback_error = "; ".join(rollback_problems) or None
         try:
             (version_root / "install.log").parent.mkdir(parents=True, exist_ok=True)
             (version_root / "install.log").write_text("\n".join(log) + "\n", encoding="utf-8")
@@ -914,14 +989,36 @@ def uninstall(options: Options, *, host: HostCommands | None = None) -> dict[str
                 assert_child(backup, runtime, "retired panel backup")
                 shutil.move(str(backup), str(original))
                 moved.append({"from": str(backup), "to": str(original)})
-    if record.get("defaults_domain"):
-        domain = str(record["defaults_domain"])
-        previous = record.get("previous_defaults") or {}
-        if domain in previous:
-            host.write_defaults(domain, "PlayerDebugMode", str(previous[domain]))
-        else:
-            host.delete_defaults(domain, "PlayerDebugMode")
-    shutil.move(str(record_path), str(runtime / f"uninstalled_{stamp}.json"))
+    restored_defaults: list[dict[str, str | None]] = []
+    defaults_failures: list[dict[str, str]] = []
+    previous_defaults = record.get("previous_defaults") or {}
+    for domain in recorded_defaults_domains(record):
+        try:
+            if domain in previous_defaults:
+                value = str(previous_defaults[domain])
+                host.write_defaults(domain, "PlayerDebugMode", value)
+                restored_defaults.append({"domain": domain, "restored": value})
+            else:
+                host.delete_defaults(domain, "PlayerDebugMode")
+                restored_defaults.append({"domain": domain, "restored": None})
+        except Exception as exc:
+            # Keep restoring the remaining domains: one failing key must not
+            # silently leave another managed domain enabled (or deleted).
+            defaults_failures.append(
+                {"domain": domain, "error": f"{type(exc).__name__}: {exc}"}
+            )
+    uninstalled_record = runtime / f"uninstalled_{stamp}.json"
+    shutil.move(str(record_path), str(uninstalled_record))
+    if restored_defaults or defaults_failures:
+        try:
+            # The moved record is the audit trail: keep what was restored and
+            # what failed next to the previous values it came from.
+            audit = json.loads(uninstalled_record.read_text(encoding="utf-8"))
+            if isinstance(audit, dict):
+                audit["defaults_restore"] = {"restored": restored_defaults, "failed": defaults_failures}
+                _write_json(uninstalled_record, audit)
+        except (OSError, ValueError):
+            pass
     previous_record = record.get("previous_install_record")
     if options.restore_previous and previous_record:
         shutil.copy2(str(previous_record), record_path)
@@ -949,8 +1046,13 @@ def uninstall(options: Options, *, host: HostCommands | None = None) -> dict[str
     else:
         _rmdir_if_empty(wrapper.parent)
     purged = purge_owned_runtime(runtime) if options.purge_runtime else []
+    warnings = [f"{entry['domain']}: PlayerDebugMode restore failed ({entry['error']}); "
+                f"its previous value is kept in the uninstalled record"
+                for entry in defaults_failures]
     return {"status": "UNINSTALLED", "moved": moved, "restored_previous": options.restore_previous,
-            "purged": purged, "record_moved_to": str(runtime / f"uninstalled_{stamp}.json")}
+            "restored_defaults": restored_defaults, "defaults_failures": defaults_failures,
+            "warnings": warnings, "purged": purged,
+            "record_moved_to": str(uninstalled_record)}
 
 
 def uninstall_plan(options: Options, *, host: HostCommands | None = None) -> dict[str, Any]:
@@ -968,6 +1070,7 @@ def uninstall_plan(options: Options, *, host: HostCommands | None = None) -> dic
                     "restores_previous": ((record or {}).get("previous_cli_wrapper")
                                           if options.restore_previous else None)},
         "restores_previous": bool(options.restore_previous),
+        "defaults_domains": recorded_defaults_domains(record) if record else [],
         "restores_defaults": (record or {}).get("previous_defaults") if record else None,
         "purge_runtime": bool(options.purge_runtime),
         "purge_scope": "only versions/f8-*, ipc/f8-* and bin/cuthere; unrelated files in a custom "
@@ -992,7 +1095,9 @@ def parse_args(argv: list[str] | None) -> Options:
                         help="transcription language for the panel (auto|zh|en|...); omit to keep an "
                              "existing recorded value, or auto on a new install")
     parser.add_argument("--python", type=Path, default=None, help="Python 3.11 interpreter")
-    parser.add_argument("--cep-version", default="12", help="CSXS version for PlayerDebugMode (default 12)")
+    parser.add_argument("--cep-version", default=None,
+                        help="restrict PlayerDebugMode to one CSXS version (default: 11 and 12, so "
+                             "Premiere Pro 2024 and 2025 both load the unsigned extension)")
     parser.add_argument("--runtime-root", type=Path, default=None)
     parser.add_argument("--extension-root", type=Path, default=None)
     parser.add_argument("--no-defaults", action="store_true", help="do not change PlayerDebugMode")
@@ -1022,7 +1127,9 @@ def main(argv: list[str] | None = None, *, host: HostCommands | None = None) -> 
             status_ok = all(check["status"] != "FAIL" for check in result["checks"])
         elif options.uninstall:
             result = uninstall(options, host=host) if options.apply else uninstall_plan(options, host=host)
-            status_ok = True
+            # Exit 3 (not 0) when a PlayerDebugMode domain could not be put
+            # back: the panel is uninstalled, but the failure must be visible.
+            status_ok = not result.get("defaults_failures")
         elif options.apply:
             result = install(options, host=host, info=info)
             status_ok = True

@@ -34,13 +34,19 @@ class FakeHost:
 
     def __init__(self, python: Path, *, fail_pip: bool = False, fail_model: bool = False,
                  fail_optional: bool = False, missing_model: bool = False,
-                 defaults: dict[str, str] | None = None):
+                 defaults: dict[str, str] | None = None,
+                 fail_write_domains: tuple[str, ...] = (),
+                 ignore_write_domains: tuple[str, ...] = (),
+                 fail_delete_domains: tuple[str, ...] = ()):
         self.python = python
         self.fail_pip = fail_pip
         self.fail_model = fail_model
         self.fail_optional = fail_optional
         self.missing_model = missing_model
         self.defaults = dict(defaults or {})
+        self.fail_write_domains = set(fail_write_domains)
+        self.ignore_write_domains = set(ignore_write_domains)
+        self.fail_delete_domains = set(fail_delete_domains)
         self.calls: list[list[str]] = []
 
     def complete(self, code: int, out: str = "", err: str = "") -> subprocess.CompletedProcess[str]:
@@ -75,9 +81,15 @@ class FakeHost:
         return self.defaults.get(f"{domain}/{key}")
 
     def write_defaults(self, domain, key, value):
+        if domain in self.fail_write_domains:
+            raise OSError(f"simulated defaults write failure for {domain}")
+        if domain in self.ignore_write_domains:
+            return  # a silent write: the read-back must catch it
         self.defaults[f"{domain}/{key}"] = value
 
     def delete_defaults(self, domain, key):
+        if domain in self.fail_delete_domains:
+            raise OSError(f"simulated defaults delete failure for {domain}")
         self.defaults.pop(f"{domain}/{key}", None)
 
     def host(self) -> installer.HostCommands:
@@ -183,7 +195,10 @@ class InstallTests(InstallerTestCase):
         self.assertTrue((self.runtime_root / "ave-bridge" / "commands").is_dir())
         self.assertTrue((self.runtime_root / "ave-bridge" / "responses").is_dir())
         self.assertTrue((self.runtime_root / "ave-bridge" / "locks").is_dir())
+        self.assertEqual(host.defaults["com.adobe.CSXS.11/PlayerDebugMode"], "1")
         self.assertEqual(host.defaults["com.adobe.CSXS.12/PlayerDebugMode"], "1")
+        self.assertEqual(record["defaults_domains"],
+                         ["com.adobe.CSXS.11", "com.adobe.CSXS.12"])
         self.assertEqual(record["previous_defaults"], {"com.adobe.CSXS.12": "0"})
         wrapper = Path(record["cli_wrapper"])
         self.assertTrue(wrapper.is_file())
@@ -329,6 +344,10 @@ class InstallTests(InstallerTestCase):
                                     extension_root=self.extension_root, no_defaults=True)
         installer.install(options, host=host.host(), info=APPLE_SILICON)
         self.assertEqual(host.defaults["com.adobe.CSXS.12/PlayerDebugMode"], "0")
+        self.assertNotIn("com.adobe.CSXS.11/PlayerDebugMode", host.defaults)
+        record = json.loads((self.runtime_root / "current_install.json").read_text(encoding="utf-8"))
+        self.assertEqual(record["defaults_domains"], [])
+        self.assertEqual(record["previous_defaults"], {})
 
     def test_legacy_bundle_is_retired_only_when_it_is_ours(self):
         legacy = self.extension_root / installer.platform_paths.LEGACY_PANEL_FOLDER
@@ -340,6 +359,199 @@ class InstallTests(InstallerTestCase):
         installer.install(self.options, host=self.fake().host(), info=APPLE_SILICON)
         self.assertFalse(legacy.exists())
         self.assertTrue(foreign.is_dir())
+
+
+class CepDefaultsTests(InstallerTestCase):
+    """The default install must cover CEP 11 (Premiere 2024) and CEP 12.
+
+    These are the regressions for the reported Mac bug: the installer only
+    wrote ``com.adobe.CSXS.12``, so Premiere 2024 (CEP 11) never loaded the
+    unsigned panel.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.destination = self.extension_root / installer.platform_paths.PANEL_FOLDER
+        (self.destination / "CSXS").mkdir(parents=True)
+        (self.destination / "CSXS" / "manifest.xml").write_text(
+            '<ExtensionManifest ExtensionBundleId="com.autovideoedit.reviewcapture"/>', encoding="utf-8")
+        (self.destination / "previous.txt").write_text("previous panel", encoding="utf-8")
+
+    def install(self, host: FakeHost, **overrides) -> dict:
+        options = installer.Options(python=self.python, runtime_root=self.runtime_root,
+                                    extension_root=self.extension_root, **overrides)
+        return installer.install(options, host=host.host(), info=APPLE_SILICON)
+
+    def uninstall(self, host: FakeHost, **overrides) -> dict:
+        values = dict(runtime_root=self.runtime_root, extension_root=self.extension_root,
+                      uninstall=True, apply=True)
+        values.update(overrides)
+        return installer.uninstall(installer.Options(**values), host=host.host())
+
+    def plan(self, **overrides) -> dict:
+        options = installer.Options(python=self.python, runtime_root=self.runtime_root,
+                                    extension_root=self.extension_root, **overrides)
+        return installer.build_plan(options, host=self.fake().host(), info=APPLE_SILICON)
+
+    def test_default_plan_lists_both_domains_and_writes_nothing(self):
+        defaults = self.plan()["defaults"]
+        self.assertEqual(defaults["mode"], "default")
+        self.assertEqual(defaults["domains"], ["com.adobe.CSXS.11", "com.adobe.CSXS.12"])
+        self.assertEqual([change["domain"] for change in defaults["changes"]], defaults["domains"])
+        self.assertEqual({change["value"] for change in defaults["changes"]}, {"1"})
+        self.assertIn("--cep-version", defaults["note"])
+        self.assertFalse(self.runtime_root.exists())
+        self.assertFalse((self.runtime_root / "current_install.json").exists())
+
+    def test_explicit_version_plan_lists_only_that_domain(self):
+        for version in ("11", "12"):
+            defaults = self.plan(cep_version=version)["defaults"]
+            self.assertEqual(defaults["mode"], "explicit")
+            self.assertEqual(defaults["domains"], [f"com.adobe.CSXS.{version}"])
+
+    def test_no_defaults_plan_skips_every_domain(self):
+        defaults = self.plan(no_defaults=True)["defaults"]
+        self.assertEqual(defaults["mode"], "skipped")
+        self.assertEqual(defaults["domains"], [])
+        self.assertEqual(defaults["changes"], [])
+
+    def test_default_apply_enables_11_and_12_and_saves_each_previous_value(self):
+        host = self.fake(defaults={"com.adobe.CSXS.12/PlayerDebugMode": "0"})
+        record = self.install(host)["record"]
+        self.assertEqual(host.defaults["com.adobe.CSXS.11/PlayerDebugMode"], "1")
+        self.assertEqual(host.defaults["com.adobe.CSXS.12/PlayerDebugMode"], "1")
+        self.assertEqual(record["defaults_domains"],
+                         ["com.adobe.CSXS.11", "com.adobe.CSXS.12"])
+        # CEP 12 had a previous value; CEP 11 did not, so its "previous" state
+        # is recorded by absence and uninstall must delete it.
+        self.assertEqual(record["previous_defaults"], {"com.adobe.CSXS.12": "0"})
+        self.assertEqual(record["cep_versions"], ["11", "12"])
+        self.assertIsNone(record["cep_version"])
+        self.assertIsNone(record["defaults_domain"])
+        self.assertTrue((self.destination / "runtime.json").is_file())
+
+    def test_explicit_11_leaves_12_untouched(self):
+        host = self.fake(defaults={"com.adobe.CSXS.12/PlayerDebugMode": "0"})
+        record = self.install(host, cep_version="11")["record"]
+        self.assertEqual(host.defaults["com.adobe.CSXS.11/PlayerDebugMode"], "1")
+        self.assertEqual(host.defaults["com.adobe.CSXS.12/PlayerDebugMode"], "0")
+        self.assertEqual(record["defaults_domains"], ["com.adobe.CSXS.11"])
+        self.assertEqual(record["defaults_domain"], "com.adobe.CSXS.11")
+
+    def test_explicit_12_leaves_11_untouched(self):
+        host = self.fake()
+        record = self.install(host, cep_version="12")["record"]
+        self.assertEqual(host.defaults["com.adobe.CSXS.12/PlayerDebugMode"], "1")
+        self.assertNotIn("com.adobe.CSXS.11/PlayerDebugMode", host.defaults)
+        self.assertEqual(record["defaults_domains"], ["com.adobe.CSXS.12"])
+
+    def test_second_domain_write_failure_restores_the_first(self):
+        host = self.fake(defaults={"com.adobe.CSXS.11/PlayerDebugMode": "0"},
+                         fail_write_domains=("com.adobe.CSXS.12",))
+        with self.assertRaises(installer.InstallError) as caught:
+            self.install(host)
+        self.assertIn("simulated defaults write failure", str(caught.exception))
+        self.assertEqual(host.defaults["com.adobe.CSXS.11/PlayerDebugMode"], "0",
+                         "the first domain must be restored when the second one fails")
+        self.assertNotIn("com.adobe.CSXS.12/PlayerDebugMode", host.defaults)
+        self.assertEqual((self.destination / "previous.txt").read_text(encoding="utf-8"), "previous panel")
+        self.assertFalse((self.runtime_root / "current_install.json").exists())
+        log = next((self.runtime_root / "versions").glob("*/install.log")).read_text(encoding="utf-8")
+        self.assertIn("failure", log)
+        self.assertIn("restored the previous PlayerDebugMode state of com.adobe.CSXS.11", log)
+
+    def test_silent_write_is_caught_by_the_read_back(self):
+        host = self.fake(defaults={"com.adobe.CSXS.11/PlayerDebugMode": "0"},
+                         ignore_write_domains=("com.adobe.CSXS.12",))
+        with self.assertRaises(installer.InstallError) as caught:
+            self.install(host)
+        self.assertIn("did not read back as 1", str(caught.exception))
+        self.assertEqual(host.defaults["com.adobe.CSXS.11/PlayerDebugMode"], "0")
+        self.assertNotIn("com.adobe.CSXS.12/PlayerDebugMode", host.defaults)
+        self.assertEqual((self.destination / "previous.txt").read_text(encoding="utf-8"), "previous panel")
+
+    def test_uninstall_restores_each_domain_to_its_pre_install_state(self):
+        # CEP 11 had an explicit 0, CEP 12 did not exist.
+        host = self.fake(defaults={"com.adobe.CSXS.11/PlayerDebugMode": "0"})
+        self.install(host)
+        result = self.uninstall(host)
+        self.assertEqual(host.defaults.get("com.adobe.CSXS.11/PlayerDebugMode"), "0")
+        self.assertNotIn("com.adobe.CSXS.12/PlayerDebugMode", host.defaults)
+        self.assertEqual(result["restored_defaults"],
+                         [{"domain": "com.adobe.CSXS.11", "restored": "0"},
+                          {"domain": "com.adobe.CSXS.12", "restored": None}])
+        self.assertFalse((self.destination).exists())
+
+    def test_uninstall_plan_shows_both_domains(self):
+        host = self.fake(defaults={"com.adobe.CSXS.12/PlayerDebugMode": "0"})
+        self.install(host)
+        plan = installer.uninstall_plan(installer.Options(
+            runtime_root=self.runtime_root, extension_root=self.extension_root,
+            uninstall=True, apply=False))
+        self.assertEqual(plan["defaults_domains"],
+                         ["com.adobe.CSXS.11", "com.adobe.CSXS.12"])
+        self.assertEqual(plan["restores_defaults"], {"com.adobe.CSXS.12": "0"})
+
+    def test_uninstall_continues_after_one_domain_restore_fails(self):
+        host = self.fake(defaults={"com.adobe.CSXS.11/PlayerDebugMode": "0"})
+        self.install(host)
+        self.assertEqual(host.defaults["com.adobe.CSXS.12/PlayerDebugMode"], "1")
+        host.fail_write_domains.add("com.adobe.CSXS.11")  # restoring 11 will fail
+        result = self.uninstall(host)
+        self.assertEqual(result["status"], "UNINSTALLED")
+        self.assertEqual([entry["domain"] for entry in result["defaults_failures"]],
+                         ["com.adobe.CSXS.11"])
+        self.assertEqual(result["restored_defaults"],
+                         [{"domain": "com.adobe.CSXS.12", "restored": None}],
+                         "a failed first domain must not skip the second one")
+        self.assertNotIn("com.adobe.CSXS.12/PlayerDebugMode", host.defaults)
+        self.assertEqual(host.defaults["com.adobe.CSXS.11/PlayerDebugMode"], "1",
+                         "the failed domain keeps its pre-uninstall value until it is fixed by hand")
+        self.assertTrue(result["warnings"])
+        audit = json.loads(Path(result["record_moved_to"]).read_text(encoding="utf-8"))
+        self.assertEqual(audit["defaults_restore"]["failed"][0]["domain"], "com.adobe.CSXS.11")
+        self.assertEqual(audit["defaults_restore"]["restored"][0]["domain"], "com.adobe.CSXS.12")
+        self.assertEqual(audit["previous_defaults"]["com.adobe.CSXS.11"], "0",
+                         "the uninstalled record must keep the previous value for manual recovery")
+
+    def test_uninstall_continues_after_a_delete_restore_fails(self):
+        # The mirror case: CEP 11 was unset (restore = delete) and CEP 12 had
+        # "0". A failing delete must not skip restoring CEP 12.
+        host = self.fake(defaults={"com.adobe.CSXS.12/PlayerDebugMode": "0"})
+        self.install(host)
+        host.fail_delete_domains.add("com.adobe.CSXS.11")
+        result = self.uninstall(host)
+        self.assertEqual([entry["domain"] for entry in result["defaults_failures"]],
+                         ["com.adobe.CSXS.11"])
+        self.assertEqual(result["restored_defaults"],
+                         [{"domain": "com.adobe.CSXS.12", "restored": "0"}],
+                         "a failed delete must not skip restoring the next domain")
+        self.assertEqual(host.defaults["com.adobe.CSXS.12/PlayerDebugMode"], "0")
+        self.assertEqual(host.defaults["com.adobe.CSXS.11/PlayerDebugMode"], "1")
+
+    def test_legacy_single_domain_record_still_uninstalls(self):
+        # A record written by the release that only knew CEP 12. Uninstall must
+        # still restore that one domain instead of doing nothing.
+        self.runtime_root.mkdir(parents=True)
+        (self.runtime_root / "bin").mkdir(parents=True)
+        wrapper = self.runtime_root / "bin" / "cuthere"
+        wrapper.write_text("#!/bin/sh\n", encoding="utf-8")
+        legacy = {
+            "version": "1.1.0-alpha.6",
+            "platform": "darwin",
+            "panels": [{"destination": str(self.destination), "backup": None}],
+            "retired_panels": [],
+            "cli_wrapper": str(wrapper),
+            "cep_version": "12",
+            "defaults_domain": "com.adobe.CSXS.12",
+            "previous_defaults": {"com.adobe.CSXS.12": "0"},
+        }
+        installer._write_json(self.runtime_root / "current_install.json", legacy)
+        host = self.fake(defaults={"com.adobe.CSXS.12/PlayerDebugMode": "1"})
+        result = self.uninstall(host)
+        self.assertEqual(host.defaults["com.adobe.CSXS.12/PlayerDebugMode"], "0")
+        self.assertEqual(result["restored_defaults"], [{"domain": "com.adobe.CSXS.12", "restored": "0"}])
+        self.assertFalse((self.runtime_root / "current_install.json").exists())
 
 
 class UninstallTests(InstallerTestCase):

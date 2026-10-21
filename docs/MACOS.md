@@ -28,7 +28,7 @@ Everything that is not a Windows API is shared code:
 | Concern | Windows | macOS |
 |---|---|---|
 | CEP extension folder (per user) | `%APPDATA%\Adobe\CEP\extensions\AutoVideoEditReviewCapture` | `~/Library/Application Support/Adobe/CEP/extensions/AutoVideoEditReviewCapture` |
-| Unsigned dev build enabled by | `HKCU\Software\Adobe\CSXS.12` → `PlayerDebugMode = 1` | user defaults for `com.adobe.CSXS.12`, key `PlayerDebugMode = 1` |
+| Unsigned dev build enabled by | `HKCU\Software\Adobe\CSXS.12` → `PlayerDebugMode = 1` | user defaults for `com.adobe.CSXS.11` **and** `com.adobe.CSXS.12`, key `PlayerDebugMode = 1` (Premiere Pro 2024 uses CEP 11; 2025 uses CEP 12) |
 | Runtime (venv, code copies, logs, receipts) | `%LOCALAPPDATA%\AutoVideoEdit\PremiereReview` | `~/Library/Application Support/Cuthere/` |
 | Bridge folder | `C:\Users\Public\Documents\ave-bridge` | `~/Library/Application Support/Cuthere/ave-bridge` |
 | Global press-and-hold shortcut (Right Option by default on macOS, F8 on Windows) | `RegisterHotKey` + `GetAsyncKeyState` (ctypes) | optional Quartz event tap (PyObjC); macOS asks for Accessibility and, on some systems, Input Monitoring |
@@ -60,7 +60,7 @@ Check the environment and the plan first:
 ./install.sh                 # DEFAULT: prints the plan, writes nothing
 ```
 
-The plan shows: host support, target extension folder, runtime folder with a version stamp, venv path, bridge folder, the `PlayerDebugMode` change, the new helper entry points, the macOS manifest change, and every file that will be moved to a backup.
+The plan shows: host support, target extension folder, runtime folder with a version stamp, venv path, bridge folder, one `PlayerDebugMode` change per CEP domain, the new helper entry points, the macOS manifest change, and every file that will be moved to a backup.
 
 ### Apply
 
@@ -77,8 +77,8 @@ The plan shows: host support, target extension folder, runtime folder with a ver
 3. Downloads the chosen faster-whisper model **only** with `--download-model`. Without it, a missing cache is reported and the panel is still installed; automatic transcription will say the model is missing until you prepare it.
 4. Copies the panel into a staging folder, removes the Windows-only `CEFCommandLine` (Direct3D/Vulkan) block from that copy, and writes `runtime.json` with helper entries, IPC root, bridge folder, model, and an explicit `language` (`--language auto|zh|en|...`, default `auto`). A language recorded by an earlier installation is preserved; `--language` is only needed to change it.
 5. Backs up the previous `AutoVideoEditReviewCapture` folder into the runtime backup folder, moves the staged panel into place, and writes `current_install.json`.
-6. Enables `PlayerDebugMode` for CEP 12 in per-user defaults, saving the previous value so uninstall can restore it.
-7. Rolls the extension folder, the defaults value, the installation record and the `cuthere` command back on failure. If the dependency, model or manifest step fails, the previous panel is still in place and the version folder keeps an `install.log`.
+6. Enables `PlayerDebugMode` for **CEP 11 and CEP 12** in per-user defaults, covering the loading settings Premiere Pro 2024 (CEP 11) and 2025 (CEP 12) need — including a Mac with both releases installed; other causes of a missing panel are still possible. Each previous value is saved separately (an absent key is remembered as absent) so uninstall can restore it. `--cep-version 11` or `--cep-version 12` restricts the run to that one domain.
+7. Rolls the extension folder, every `PlayerDebugMode` domain already changed, the installation record and the `cuthere` command back on failure. If the dependency, model or manifest step fails, the previous panel is still in place and the version folder keeps an `install.log`.
 
 Options:
 
@@ -91,7 +91,7 @@ Options:
 | `--download-model` | Download the model weights (network) |
 | `--language auto\|zh\|en\|…` | Language recorded for the panel; `auto` = detect. Omit it to keep an existing setting |
 | `--python PATH` | Python 3.11 interpreter to use (also honoured by `install.sh` itself) |
-| `--cep-version N` | CSXS version for `PlayerDebugMode` (default `12`) |
+| `--cep-version N` | Restrict the `PlayerDebugMode` change to one CSXS version `N`. Default: both `11` (Premiere Pro 2024) and `12` (2025) |
 | `--runtime-root DIR` | Override the runtime folder (tests, portable setups) |
 | `--extension-root DIR` | Override the extension folder (tests, sandbox) |
 | `--no-defaults` | Skip the `PlayerDebugMode` change (e.g. if you set it yourself) |
@@ -238,7 +238,7 @@ Add `~/Library/Application Support/Cuthere/bin` to `PATH` if you like; nothing i
 ./uninstall.sh --apply --purge-runtime      # additionally delete this tool's runtime files
 ```
 
-Uninstall never deletes `<project>/work/` or `<project>/output/`: your notes, recordings and edit receipts stay in the project. With `--restore-previous` the previous panel, `current_install.json` and the `cuthere` command are put back together, and the defaults value for `PlayerDebugMode` is restored. `--purge-runtime` only removes `versions/f8-*`, `ipc/f8-*` and `bin/cuthere`; unrelated files in a custom runtime root are kept. `--restore-previous` and `--purge-runtime` cannot be combined (run them in two steps), because a restored installation needs its runtime. Restart Premiere afterwards. `uninstall.sh` needs Python 3.10+ (3.11 preferred); it only reads the installation record and moves folders.
+Uninstall never deletes `<project>/work/` or `<project>/output/`: your notes, recordings and edit receipts stay in the project. With `--restore-previous` the previous panel, `current_install.json` and the `cuthere` command are put back together, and the `PlayerDebugMode` value of every CEP domain this installation changed is restored (a key that did not exist before is removed again). `--purge-runtime` only removes `versions/f8-*`, `ipc/f8-*` and `bin/cuthere`; unrelated files in a custom runtime root are kept. `--restore-previous` and `--purge-runtime` cannot be combined (run them in two steps), because a restored installation needs its runtime. Restart Premiere afterwards. `uninstall.sh` needs Python 3.10+ (3.11 preferred); it only reads the installation record and moves folders.
 
 ## Troubleshooting
 
@@ -246,7 +246,20 @@ Uninstall never deletes `<project>/work/` or `<project>/output/`: your notes, re
 
 **`./install.sh` says Python 3.11 was not found.** Install it from python.org, pass `--python /Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11`, or set `CUTHERE_PYTHON` to that path. `install.sh` honours the same `--python` value it uses to run itself.
 
-**The extension does not appear in Premiere.** Confirm the folder exists at `~/Library/Application Support/Adobe/CEP/extensions/AutoVideoEditReviewCapture/CSXS/manifest.xml`, that `defaults read com.adobe.CSXS.12 PlayerDebugMode` prints `1`, and that you fully quit Premiere (⌘Q) rather than closing the window.
+**The extension does not appear in Premiere.** Confirm the folder exists at `~/Library/Application Support/Adobe/CEP/extensions/AutoVideoEditReviewCapture/CSXS/manifest.xml`, then read the CEP flag for the Premiere release you run:
+
+```bash
+defaults read com.adobe.CSXS.11 PlayerDebugMode   # Premiere Pro 2024
+defaults read com.adobe.CSXS.12 PlayerDebugMode   # Premiere Pro 2025
+```
+
+The default installation sets both, so a fresh install from this source tree should not need this. If the panel came from an older build (or an explicit `--cep-version 12`), re-run `./install.sh --apply` from this source tree (it sets both), or set the missing one yourself:
+
+```bash
+defaults write com.adobe.CSXS.11 PlayerDebugMode -string 1
+```
+
+The published **1.1.0-alpha.6** archive predates this change and only sets CEP 12. With that package, run `./install.sh --apply --cep-version 11` to add the CEP 11 flag, or use the `defaults write` command above. Then **fully quit Premiere (⌘Q)** and reopen it; closing the window is not enough. If both Premiere Pro 2024 and 2025 are installed on this Mac, both flags must stay set.
 
 **The panel is blank or the helper never connects.** Run `cuthere doctor`; check `<runtime>/ipc/f8-<version>/status.json` is being updated (its timestamp moves every half second). If the helper process cannot start, run the entry by hand to see the error:
 

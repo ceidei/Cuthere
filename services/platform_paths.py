@@ -24,6 +24,12 @@ LEGACY_PANEL_FOLDER = "autovideoedit"
 PANEL_BUNDLE_ID = "com.autovideoedit.reviewcapture"
 LEGACY_BUNDLE_ID = "com.autovideoedit.hermes"
 
+# Adobe's integration table puts Premiere Pro 2024 (24.x) on CEP 11 and 2025
+# (25.x) on CEP 12. A Mac can have either release, or both, installed at the
+# same time, so the unsigned-development flag is enabled for both generations
+# unless the user restricts the run with an explicit ``--cep-version``.
+DEFAULT_CEP_VERSIONS = ("11", "12")
+
 # Documented overrides for tests and portable installs. AVE_BRIDGE_DIR is kept
 # because the 1.0 Windows installer and f8.ps1 already use it.
 OVERRIDE_VARS = {
@@ -165,9 +171,27 @@ def cli_wrapper_path(platform: str | None = None, environ: dict[str, str] | None
     return Path(cli_wrapper_path_text(platform, environ))
 
 
+def cep_versions(cep_version: str | None = None) -> tuple[str, ...]:
+    """CEP generations to manage.
+
+    ``None`` means the default set: every generation this product supports
+    (CEP 11 for Premiere Pro 2024 and CEP 12 for Premiere Pro 2025). An
+    explicit value keeps the old single-version behaviour.
+    """
+    if cep_version is None:
+        return DEFAULT_CEP_VERSIONS
+    value = str(cep_version).strip()
+    return (value,) if value else DEFAULT_CEP_VERSIONS
+
+
 def ssxs_defaults_domain(cep_version: str = "12") -> str:
     """User-defaults domain that CEP reads for the unsigned-development flag."""
     return f"com.adobe.CSXS.{cep_version}"
+
+
+def ssxs_defaults_domains(cep_version: str | None = None) -> tuple[str, ...]:
+    """Every domain a run must set for the CEP versions it covers."""
+    return tuple(ssxs_defaults_domain(version) for version in cep_versions(cep_version))
 
 
 def is_within(root: Path, path: Path) -> bool:

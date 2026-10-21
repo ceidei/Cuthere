@@ -62,13 +62,13 @@
     },
     {
       "path": "README.md",
-      "bytes": 8706,
-      "sha256": "5ea1872e57d99d7ae359e15f889072cad802e16de00ec6653a65a23bad005a25"
+      "bytes": 9432,
+      "sha256": "f818c3d9a0727ea04134a8be163adfba54de05446a9a69ad464696947b4b5ee4"
     },
     {
       "path": "README.zh-CN.md",
-      "bytes": 7711,
-      "sha256": "ed16158b53dcdd4fbb15d20ea20ae9df0085b1e56fdd340bb470050881a448d0"
+      "bytes": 8390,
+      "sha256": "33a0041df59aac60ac771f6c66105ed1f9f1be47508c91126b5244deaa94edf9"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
@@ -112,8 +112,8 @@
     },
     {
       "path": "docs/MACOS.md",
-      "bytes": 31837,
-      "sha256": "89b45fd85950dfbb57658dbc6ea31b4e1a598a1f6cfcc5747d6d75f6ceddb812"
+      "bytes": 33246,
+      "sha256": "f78f1acea3c429f330ae123256e9200d039951c0c516307a91c8acd3bd0274ee"
     },
     {
       "path": "docs/RELEASE_STATUS.md",
@@ -122,8 +122,8 @@
     },
     {
       "path": "docs/TROUBLESHOOTING.md",
-      "bytes": 4306,
-      "sha256": "608873293c14e1adc54505fbbce2fdb38d371ebadf4ee92be25f8f5704a4b092"
+      "bytes": 5241,
+      "sha256": "c78a408e2a8f8a038e687af6eb1c37f9a59127a679e26d982015e598ef1e12d5"
     },
     {
       "path": "docs/en/AGENT_COMPATIBILITY.md",
@@ -152,8 +152,8 @@
     },
     {
       "path": "docs/en/TROUBLESHOOTING.md",
-      "bytes": 4887,
-      "sha256": "df6b98f377f67ba82cbe708212b8d40a686c61852cf35c4f6813387a4c40336f"
+      "bytes": 5897,
+      "sha256": "e68a0142d7246ad8f5812077685fa08d45c27f5dced450ca8c4020bdf56eedd2"
     },
     {
       "path": "engine/__init__.py",
@@ -317,8 +317,8 @@
     },
     {
       "path": "scripts/install_macos.py",
-      "bytes": 51744,
-      "sha256": "562dc3b20691df6d21912e632dc2c3166b7daa79fdf37d364b59ef404d8b40d0"
+      "bytes": 57370,
+      "sha256": "6e1e62cd27068b02d83a1e7f3b14f6afe4188f2d46181575785fc7755797f971"
     },
     {
       "path": "scripts/panel_install.ps1",
@@ -352,8 +352,8 @@
     },
     {
       "path": "scripts/review_doctor.py",
-      "bytes": 7033,
-      "sha256": "41d1f6b96eba9a67a366dca26afc99d7e995c235f4e0ffc99001f374caf9f089"
+      "bytes": 10607,
+      "sha256": "1c84546775ec53a61462543b085270d5eca9530438f15c51f108ae7b3a3d67ac"
     },
     {
       "path": "scripts/select_sequence.py",
@@ -387,8 +387,8 @@
     },
     {
       "path": "services/platform_paths.py",
-      "bytes": 6841,
-      "sha256": "2664b5f645c1232e1096a956fe167ef61baa652c5c52df991c220224ee3d7a48"
+      "bytes": 7897,
+      "sha256": "c2b37c863e88d16f7b3088ea45c57c8aa38bd147cb0c95252ca23c7d166d8799"
     },
     {
       "path": "services/review_capture/__init__.py",
@@ -552,8 +552,8 @@
     },
     {
       "path": "tests/platform/test_installer_plan.py",
-      "bytes": 36212,
-      "sha256": "f12d14468463b585033087af90587fd0b9fd0bb1150fe313f4ea271f6437888d"
+      "bytes": 48893,
+      "sha256": "f8092b9c86b854472d80c30262b233c2d08dc22958a2a55c955ef830e471c856"
     },
     {
       "path": "tests/platform/test_platform_paths.py",
@@ -564,6 +564,11 @@
       "path": "tests/platform/test_release_build.py",
       "bytes": 11611,
       "sha256": "c9f38e2cfbf125ddccaf1e7828f8c7e5c280df41a112760257eefdca5eb7c0ed"
+    },
+    {
+      "path": "tests/platform/test_review_doctor.py",
+      "bytes": 5445,
+      "sha256": "0de247fbd4df85d87ad0f87ec8680ca4124825382a73183f050dddeaf6dcff73"
     },
     {
       "path": "tests/platform/test_shortcut_backends.py",

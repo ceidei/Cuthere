@@ -56,11 +56,90 @@ def player_debug_darwin(cep_version: str) -> tuple[str | None, str]:
     return completed.stdout.strip(), ""
 
 
+def cep_versions_for(current: str, cep_version: str | None) -> tuple[str, ...]:
+    """CEP generations a diagnosis covers.
+
+    macOS checks both supported generations by default, matching the installer,
+    so a working CEP 12 setting cannot hide a missing CEP 11 one that Premiere
+    2024 needs. An explicit ``--cep-version`` restricts the check to one
+    generation; Windows keeps its existing single-version default.
+    """
+    if cep_version:
+        return (str(cep_version),)
+    if current == "darwin":
+        return platform_paths.DEFAULT_CEP_VERSIONS
+    return ("12",)
+
+
+def cep_role(version: str) -> str:
+    if version == "11":
+        return "Premiere Pro 2024（24.x）使用 CEP 11"
+    if version == "12":
+        return "Premiere Pro 2025（25.x）使用 CEP 12"
+    return f"CEP {version}"
+
+
+def _defaults_detail(current: str, version: str, value: str | None, why: str) -> tuple[str, str]:
+    """Explain what was actually read, not just whether it equals 1.
+
+    Three states must stay distinguishable: unreadable/absent (``value`` is
+    None), read but different from the target (for example ``0``), and enabled.
+    The old wording called every non-1 value "not read", which hid a concrete
+    ``0`` behind an empty reason.
+    """
+    domain = platform_paths.ssxs_defaults_domain(version)
+    if current == "win32":
+        source = f"CSXS.{version}"
+    else:
+        source = f"defaults {domain}"
+    if value == "1":
+        label = "PlayerDebugMode=1（目标 1）" if current == "win32" else f"{source} PlayerDebugMode=1（目标 1）"
+        return label, "enabled"
+    if value is not None:
+        label = (f"PlayerDebugMode={value}（目标为 1）" if current == "win32"
+                 else f"{source} PlayerDebugMode={value}（目标为 1）")
+        state = "value"
+        label = f"{label}；读到的是 {value!r}，不是 1"
+    else:
+        label = (f"CSXS.{version} 的 PlayerDebugMode 未读取到：{why}" if current == "win32"
+                 else f"{source} PlayerDebugMode 未读取到：{why}")
+        state = "unreadable"
+    if current == "darwin":
+        label = f"{label}；{cep_role(version)}。"
+        if state != "enabled":
+            label += (f"重新运行安装器（默认同时启用 CEP 11 与 CEP 12），或执行 "
+                      f"defaults write {domain} PlayerDebugMode -string 1，然后完整退出并重开 Premiere")
+    return label, state
+
+
+def player_debug_checks(current: str, cep_version: str | None = None) -> list[dict[str, Any]]:
+    """One check per CEP domain; every value carries its CEP generation."""
+    versions = cep_versions_for(current, cep_version)
+    if current not in {"win32", "darwin"}:
+        return [{"status": "BLOCKED", "name": "CEP 开发扩展加载设置",
+                 "detail": "仅检查了 Windows 与 macOS 环境", "version": None,
+                 "value": None, "why": "", "state": "unsupported"}]
+    entries: list[dict[str, Any]] = []
+    for version in versions:
+        if current == "win32":
+            value, why = player_debug_windows(version)
+            name = "CEP 开发扩展加载设置"
+        else:
+            value, why = player_debug_darwin(version)
+            name = f"CEP {version} 开发扩展加载设置"
+        detail, state = _defaults_detail(current, version, value, why)
+        entries.append({"status": "PASS" if state == "enabled" else "BLOCKED", "name": name,
+                        "detail": detail, "version": version, "value": value, "why": why,
+                        "state": state})
+    return entries
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--project-root", required=True, type=Path)
     parser.add_argument("--report-dir", required=True, type=Path)
-    parser.add_argument("--cep-version", default="12")
+    parser.add_argument("--cep-version", default=None,
+                        help="check one CSXS version (macOS default: 11 and 12; Windows default: 12)")
     args = parser.parse_args()
     project_root = args.project_root.resolve()
     extension = platform_paths.extension_root() / platform_paths.PANEL_FOLDER
@@ -107,17 +186,18 @@ def main() -> int:
         add("FAIL", "按住录音后端", f"{type(exc).__name__}: {exc}")
 
     player_debug = None
+    player_debug_modes: dict[str, str | None] = {}
     current = platform_paths.current_platform()
-    if current == "win32":
-        player_debug, why = player_debug_windows(args.cep_version)
-        add("PASS" if str(player_debug) == "1" else "BLOCKED", "CEP 开发扩展加载设置",
-            str(player_debug) if player_debug is not None else f"CSXS.{args.cep_version} 的 PlayerDebugMode 未读取到：{why}")
-    elif current == "darwin":
-        player_debug, why = player_debug_darwin(args.cep_version)
-        add("PASS" if str(player_debug) == "1" else "BLOCKED", "CEP 开发扩展加载设置",
-            str(player_debug) if player_debug is not None else f"defaults {platform_paths.ssxs_defaults_domain(args.cep_version)} PlayerDebugMode 未读取到：{why}")
-    else:
-        add("BLOCKED", "CEP 开发扩展加载设置", "仅检查了 Windows 与 macOS 环境")
+    cep_checks = player_debug_checks(current, args.cep_version)
+    checks.extend(cep_checks)
+    for entry in cep_checks:
+        if entry.get("version"):
+            value = entry.get("value")
+            player_debug_modes[str(entry["version"])] = str(value) if value is not None else None
+    if cep_checks:
+        # The primary value is the explicitly checked version, or the newest
+        # generation of the default set (CEP 12), matching the old report field.
+        player_debug = cep_checks[0].get("value") if args.cep_version else cep_checks[-1].get("value")
 
     checks.append({"status": "NOT_RUN", "name": "Premiere 宿主读取", "detail": "需要打开本机 Premiere 和专用测试序列，不能由静态检查替代。"})
     checks.append({"status": "NOT_RUN", "name": "真实麦克风录音", "detail": "doctor 不采集声音；需通过明确的录音验收操作验证。"})
@@ -130,6 +210,7 @@ def main() -> int:
         "extension_path": str(extension),
         "runtime_root": str(runtime_root),
         "player_debug_mode": player_debug,
+        "player_debug_modes": player_debug_modes,
         "microphones": devices,
         "checks": checks,
         "overall": "PASS" if all(c["status"] == "PASS" for c in checks) else "BLOCKED",
